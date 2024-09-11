@@ -4,8 +4,7 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark, neobrutalism, shadesOfPurple } from "@clerk/themes";
 
-import { ThemeProvider } from "@/components/theme-provider"
-
+import { ThemeProvider } from "@/components/theme-provider";
 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -23,23 +22,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    
     <ClerkProvider
       appearance={{
-        baseTheme: [dark],
+        baseTheme: [],
         variables: { colorPrimary: "#1E4FD8" },
+        layout: {
+          animations: true,
+          logoPlacement: "outside",
+          shimmer: true,
+        },
       }}
     >
       <html lang="en">
         <body className={inter.className}>
-        <ThemeProvider
+          <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-          <Toaster />
-          {children}
+            <Toaster />
+            {children}
           </ThemeProvider>
         </body>
       </html>

@@ -5,17 +5,26 @@ import Image from "next/image";
 
 export default function Page() {
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-slate-800">
       <div className="h-full lg:flex flex-col items-center justify-center px-4">
         <div className="text-center space-y-4 pt-16">
-          <h1 className="font-bold text-3xl text-[#2E2A47]">Welcome Back!</h1>
-          <p className="text-base text-[#7E8CA0]">
-            Login or create an account to get started.
+          <h1 className="font-bold text-4xl text-slate-100">Welcome!</h1>
+          <p className="text-base text-slate-400">
+            Create an account or login to get started.
           </p>
         </div>
         <div className="flex items-center justify-center mt-8">
           <ClerkLoaded>
-            <SignUp path="/sign-up" />
+            <SignUp
+              path="/sign-up"
+              appearance={{
+                elements: {
+                  formButtonPrimary:
+                    "bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-md transition-colors",
+                  footerActionLink: "text-purple-600 hover:text-purple-700",
+                },
+              }}
+            />
           </ClerkLoaded>
           <ClerkLoading>
             <Loader2 className="animate-spin" />

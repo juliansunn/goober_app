@@ -1,18 +1,18 @@
-"use client";
-
-import DragAndDrop from "@/components/test/test-dnd";
 import { WorkoutBuilder } from "@/components/workout-builder";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
-  const items = [
-    { id: 1, name: "Card 1" },
-    { id: 2, name: "Card 2" },
-    { id: 3, name: "Card 3" },
-  ];
+export default function Dashboard() {
+  const { userId } = auth();
+
+  if (!userId) {
+    redirect("/");
+  }
 
   return (
     <div>
-      <DragAndDrop itemArray={items} />
+      <h1>Welcome to your dashboard</h1>
+      <WorkoutBuilder />
     </div>
   );
 }
