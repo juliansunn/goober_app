@@ -2,7 +2,7 @@ import { WorkoutBuilder } from "@/components/workout-builder";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-export default function Dashboard() {
+export default async function Dashboard() {
   const { userId } = auth();
 
   if (!userId) {

@@ -59,7 +59,17 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
-  		}
+  		},
+		animation: {
+		'reverse-spin': 'reverse-spin 1s linear infinite'
+		},
+		keyframes: {
+		'reverse-spin': {
+			from: {
+			transform: 'rotate(360deg)'
+			},
+		}
+		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

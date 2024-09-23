@@ -4,18 +4,18 @@ export const getIntervalColor = (
   intervalType: IntervalType,
   isRepeat: boolean = false
 ) => {
-  if (isRepeat) return "bg-purple-100";
+  if (isRepeat) return "bg-purple-100 dark:bg-purple-800";
   switch (intervalType) {
     case IntervalType.WARMUP:
-      return "bg-blue-50";
+      return "bg-blue-50 dark:bg-blue-400";
     case IntervalType.ACTIVE:
-      return "bg-purple-200";
+      return "bg-purple-200 dark:bg-purple-800";
     case IntervalType.COOLDOWN:
-      return "bg-slate-100";
+      return "bg-slate-100 dark:bg-slate-300";
     case IntervalType.REST:
-      return "bg-slate-50";
+      return "bg-slate-50 dark:bg-white";
     default:
-      return "";
+      return "bg-slate-100 dark:bg-slate-600";
   }
 };
 

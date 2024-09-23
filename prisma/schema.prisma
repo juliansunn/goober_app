@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  clerkId   String    @unique
+  username  String?
+  name      String?
+  email     String?   @unique
+  workouts  Workout[] @relation("AuthoredWorkouts")
+  favorites Workout[] @relation("FavoritedWorkouts")
+}
+
+model Workout {
+  id          Int           @id @default(autoincrement())
+  title       String
+  description String
+  type        WorkoutType
+  items       WorkoutItem[]
+  author      User          @relation("AuthoredWorkouts", fields: [authorId], references: [id])
+  authorId    Int
+  favoritedBy User?         @relation("FavoritedWorkouts", fields: [userId], references: [id])
+  userId      Int?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model WorkoutItem {
+  id          Int          @id @default(autoincrement())
+  workout     Workout      @relation(fields: [workoutId], references: [id])
+  workoutId   Int
+  order       Int
+  interval    Interval?
+  repeatGroup RepeatGroup?
+}
+
+model Interval {
+  id            Int           @id @default(autoincrement())
+  type          IntervalType
+  durationType  DurationType
+  durationValue Float
+  durationUnit  String
+  intensityType IntensityType
+  intensityMin  String?
+  intensityMax  String?
+  workoutItem   WorkoutItem?  @relation(fields: [workoutItemId], references: [id])
+  workoutItemId Int?          @unique
+  repeatGroup   RepeatGroup?  @relation(fields: [repeatGroupId], references: [id])
+  repeatGroupId Int?
+}
+
+model RepeatGroup {
+  id            Int         @id @default(autoincrement())
+  repeats       Int
+  intervals     Interval[]
+  workoutItem   WorkoutItem @relation(fields: [workoutItemId], references: [id])
+  workoutItemId Int         @unique
+}
+
+enum WorkoutType {
+  RUN
+  BIKE
+  SWIM
+}
+
+enum IntervalType {
+  WARMUP
+  COOLDOWN
+  ACTIVE
+  REST
+}
+
+enum DurationType {
+  TIME
+  DISTANCE
+  HEART_RATE
+  CALORIES
+}
+
+enum IntensityType {
+  NONE
+  CADENCE
+  HEART_RATE
+  POWER
+  PACE_MILE
+  PACE_KM
+  PACE_400M
+}

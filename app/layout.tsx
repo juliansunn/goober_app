@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark, neobrutalism, shadesOfPurple } from "@clerk/themes";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import ReactQueryProvider from "@lib/tanstack-provider";
 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -29,7 +29,9 @@ export default function RootLayout({
         layout: {
           animations: true,
           logoPlacement: "outside",
-          shimmer: true,
+        },
+        elements: {
+          userButtonBox: "text-white",
         },
       }}
     >
@@ -41,8 +43,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Toaster />
-            {children}
+            <ReactQueryProvider>
+              <Toaster />
+              {children}
+            </ReactQueryProvider>
           </ThemeProvider>
         </body>
       </html>
