@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -23,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Reorder } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 import * as z from "zod";
 
@@ -40,129 +42,263 @@ import {
 } from "@/components/ui/form";
 import IntervalItem from "./interval-item";
 import { getIntervalColor } from "@/lib/workout-utils";
+import IntervalForm from "./forms/interval-form";
+import { useTheme } from "next-themes";
+import { createWorkout } from "@/functions/workouts";
+
+import {
+  createWorkoutSchema,
+  CreateWorkoutInput,
+} from "@/schemas/workout-schema";
 import {
   DurationType,
   IntensityType,
   Interval,
   IntervalType,
-  RepeatGroup,
   Workout,
-  WorkoutType,
+  RepeatGroup,
+  WorkoutItem,
 } from "@/types/workouts";
-import IntervalForm from "./forms/interval-form";
+import { toast } from "sonner";
+import { WorkoutType } from "@prisma/client";
+import { useMutation } from "@tanstack/react-query";
 
-const workoutSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string(),
-  type: z.nativeEnum(WorkoutType),
-});
+interface WorkoutBuilderProps {
+  initialWorkout?: Workout;
+}
 
-export function WorkoutBuilder() {
-  const [workout, setWorkout] = useState<Workout>({
-    title: "",
-    description: "",
-    type: WorkoutType.RUN,
-    intervals: [],
-  });
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isRepeatMode, setIsRepeatMode] = useState(false);
-  const [newInterval, setNewInterval] = useState<Interval>({
-    id: Date.now(),
-    type: IntervalType.ACTIVE,
-    duration: { type: DurationType.TIME, value: 0, unit: "minutes" },
-    intensityTarget: { type: IntensityType.NONE, min: "", max: "" },
-  });
-  const [newRepeatGroup, setNewRepeatGroup] = useState<RepeatGroup>({
-    id: Date.now(),
-    intervals: [newInterval],
-    repeats: 1,
-  });
-  const [editingItem, setEditingItem] = useState<Interval | RepeatGroup | null>(
-    null
-  );
-
-  const form = useForm<z.infer<typeof workoutSchema>>({
-    resolver: zodResolver(workoutSchema),
-    defaultValues: {
+export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
+  const { theme } = useTheme();
+  const [workout, setWorkout] = useState<Workout>(
+    initialWorkout || {
       title: "",
       description: "",
       type: WorkoutType.RUN,
+      items: [],
+    }
+  );
+
+  const [isIntervalDialogOpen, setIsIntervalDialogOpen] = useState(false);
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isRepeatMode, setIsRepeatMode] = useState(false);
+  const [newInterval, setNewInterval] = useState<Interval>({
+    type: IntervalType.ACTIVE,
+    durationType: DurationType.TIME,
+    durationValue: 0,
+    durationUnit: "minutes",
+    intensityType: IntensityType.NONE,
+    intensityMin: "",
+    intensityMax: "",
+  });
+  const [newRepeatGroup, setNewRepeatGroup] = useState<RepeatGroup>({
+    intervals: [newInterval],
+    repeats: 1,
+  });
+  const [editingItem, setEditingItem] = useState<WorkoutItem | null>(null);
+
+  const form = useForm<CreateWorkoutInput>({
+    resolver: zodResolver(createWorkoutSchema),
+    defaultValues: {
+      title: initialWorkout?.title || "",
+      description: initialWorkout?.description || "",
+      type: initialWorkout?.type || WorkoutType.RUN,
+      items:
+        initialWorkout?.items
+          .filter((item) => item.interval || item.repeatGroup)
+          .map((item) => ({
+            order: item.order,
+            interval: item.interval
+              ? {
+                  type: item.interval.type,
+                  durationType: item.interval.durationType,
+                  durationValue: item.interval.durationValue ?? 0,
+                  durationUnit: item.interval.durationUnit || "minutes",
+                  intensityType: item.interval.intensityType,
+                  intensityMin: item.interval.intensityMin || "",
+                  intensityMax: item.interval.intensityMax || "",
+                }
+              : undefined,
+            repeatGroup: item.repeatGroup
+              ? {
+                  repeats: item.repeatGroup.repeats,
+                  intervals: item.repeatGroup.intervals
+                    .filter(Boolean)
+                    .map((interval) => ({
+                      type: interval.type,
+                      durationType: interval.durationType,
+                      durationValue: interval.durationValue ?? 0,
+                      durationUnit: interval.durationUnit || "minutes",
+                      intensityType: interval.intensityType,
+                      intensityMin: interval.intensityMin || "",
+                      intensityMax: interval.intensityMax || "",
+                    })),
+                  restInterval: item.repeatGroup.restInterval
+                    ? {
+                        type: item.repeatGroup.restInterval.type,
+                        durationType:
+                          item.repeatGroup.restInterval.durationType,
+                        durationValue:
+                          item.repeatGroup.restInterval.durationValue ?? 0,
+                        durationUnit:
+                          item.repeatGroup.restInterval.durationUnit ||
+                          "minutes",
+                        intensityType:
+                          item.repeatGroup.restInterval.intensityType,
+                        intensityMin:
+                          item.repeatGroup.restInterval.intensityMin || "",
+                        intensityMax:
+                          item.repeatGroup.restInterval.intensityMax || "",
+                      }
+                    : undefined,
+                }
+              : undefined,
+          })) || [],
     },
   });
 
-  const addInterval = () => {
+  // Use useEffect to update form values when initialWorkout changes
+  useEffect(() => {
+    if (initialWorkout) {
+      form.reset({
+        title: initialWorkout.title,
+        description: initialWorkout.description,
+        type: initialWorkout.type,
+      });
+      setWorkout(initialWorkout);
+    }
+  }, [initialWorkout, form]);
+
+  const createWorkoutMutation = useMutation({
+    mutationFn: createWorkout,
+    onSuccess: () => {
+      toast("Workout created successfully!");
+
+      // Reset the form and workout state
+      form.reset({
+        title: "",
+        description: "",
+        type: WorkoutType.RUN,
+        items: [],
+      });
+      setWorkout({
+        title: "",
+        description: "",
+        type: WorkoutType.RUN,
+        items: [],
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating workout:", error);
+      toast("Failed to create workout");
+    },
+  });
+
+  const handleCreateWorkout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitDialogOpen(false);
+
+    const data = form.getValues();
+    const workoutData: CreateWorkoutInput = {
+      title: data.title,
+      description: data.description,
+      type: data.type,
+      items: workout.items
+        .filter((item) => item.interval || item.repeatGroup)
+        .map((item) => ({
+          id: item.id ?? Date.now(),
+          order: item.order,
+          ...(item.interval && {
+            interval: {
+              type: item.interval.type as IntervalType,
+              durationType: item.interval.durationType as DurationType,
+              durationValue: item.interval.durationValue ?? 0,
+              durationUnit: item.interval.durationUnit ?? "",
+              intensityType: item.interval.intensityType as IntensityType,
+              intensityMin: item.interval.intensityMin,
+              intensityMax: item.interval.intensityMax,
+            },
+          }),
+          ...(item.repeatGroup && { repeatGroup: item.repeatGroup }),
+        })),
+    };
+
+    createWorkoutMutation.mutate(workoutData);
+  };
+
+  const addItem = () => {
+    const newId = workout.items.length + 1;
     if (isRepeatMode) {
       setWorkout((prev) => ({
         ...prev,
-        intervals: [...prev.intervals, { ...newRepeatGroup, id: Date.now() }],
+        items: [
+          ...prev.items,
+          { id: newId, order: prev.items.length, repeatGroup: newRepeatGroup },
+        ],
       }));
       setNewRepeatGroup({
-        id: Date.now(),
         intervals: [newInterval],
         repeats: 1,
       });
     } else {
       setWorkout((prev) => ({
         ...prev,
-        intervals: [...prev.intervals, { ...newInterval, id: Date.now() }],
+        items: [
+          ...prev.items,
+          { id: newId, order: prev.items.length, interval: newInterval },
+        ],
       }));
-      setNewInterval({
-        id: Date.now(),
+      setNewInterval((prev) => ({
+        id: (prev?.id ?? 0) + 1,
         type: IntervalType.ACTIVE,
-        duration: { type: DurationType.TIME, value: 0, unit: "minutes" },
-        intensityTarget: { type: IntensityType.NONE, min: "", max: "" },
-      });
+        durationType: DurationType.TIME,
+        durationValue: 0,
+        durationUnit: "minutes",
+        intensityType: IntensityType.NONE,
+        intensityMin: "",
+        intensityMax: "",
+      }));
     }
-    setIsDialogOpen(false);
+    setIsIntervalDialogOpen(false);
   };
 
-  const removeInterval = useCallback((id: number) => {
-    console.log("Removing interval with id:", id);
+  const removeInterval = useCallback((idToRemove: number) => {
     setWorkout((prev) => ({
       ...prev,
-      intervals: prev.intervals.filter((item) => {
-        if ("intervals" in item) {
-          if (item.id === id) return false;
-          item.intervals = item.intervals.filter(
-            (interval) => interval.id !== id
-          );
-          return true;
-        }
-        return item.id !== id;
-      }),
+      items: prev.items
+        .filter((item) => item.id !== idToRemove)
+        .map((item, index) => ({ ...item, order: index })),
     }));
   }, []);
 
-  const editInterval = useCallback((item: Interval | RepeatGroup) => {
-    console.log("Editing item:", item);
+  const editInterval = useCallback((item: WorkoutItem) => {
     setEditingItem(item);
-    if ("intervals" in item) {
+    if (item.repeatGroup) {
       setIsRepeatMode(true);
-      setNewRepeatGroup(item);
-    } else {
+      setNewRepeatGroup(item.repeatGroup);
+    } else if (item.interval) {
       setIsRepeatMode(false);
-      setNewInterval(item);
+      setNewInterval(item.interval);
     }
-    setIsDialogOpen(true);
+    setIsIntervalDialogOpen(true);
   }, []);
 
   const updateItem = () => {
     if (editingItem) {
       setWorkout((prev) => ({
         ...prev,
-        intervals: prev.intervals.map((item) => {
-          if ("intervals" in item && "intervals" in editingItem) {
-            return item.id === editingItem.id ? newRepeatGroup : item;
-          } else if (!("intervals" in item) && !("intervals" in editingItem)) {
-            return item.id === editingItem.id ? newInterval : item;
+        items: prev.items.map((item) => {
+          if (item.id === editingItem.id) {
+            return isRepeatMode
+              ? { ...item, repeatGroup: newRepeatGroup }
+              : { ...item, interval: newInterval };
           }
           return item;
         }),
       }));
     } else {
-      addInterval();
+      addItem();
     }
-    setIsDialogOpen(false);
+    setIsIntervalDialogOpen(false);
     setEditingItem(null);
   };
 
@@ -175,164 +311,175 @@ export function WorkoutBuilder() {
     }
   }, [newInterval, isRepeatMode]);
 
-  const getItemPos = (id: number) =>
-    workout.intervals.findIndex((item) => item.id === id);
-
-  function onSubmit(values: z.infer<typeof workoutSchema>) {
-    const fullWorkout = {
-      ...values,
-      intervals: workout.intervals,
-    };
-    console.log(JSON.stringify(fullWorkout, null, 2));
-  }
-
-  const handleReorder = (newOrder: (Interval | RepeatGroup)[]) => {
+  const handleReorder = (newOrder: WorkoutItem[]) => {
     setWorkout((prev) => ({
       ...prev,
-      intervals: newOrder,
+      items: newOrder.map((item, index) => ({ ...item, order: index })),
     }));
   };
 
   const moveInterval = (id: number, direction: "up" | "down") => {
     setWorkout((prev) => {
-      const index = prev.intervals.findIndex((item) => item.id === id);
+      const index = prev.items.findIndex((item) => item.id === id);
       if (
         (direction === "up" && index === 0) ||
-        (direction === "down" && index === prev.intervals.length - 1)
+        (direction === "down" && index === prev.items.length - 1)
       ) {
         return prev; // Do nothing if trying to move beyond array bounds
       }
 
-      const newIntervals = [...prev.intervals];
+      const newItems = [...prev.items];
       const swapIndex = direction === "up" ? index - 1 : index + 1;
-      [newIntervals[index], newIntervals[swapIndex]] = [
-        newIntervals[swapIndex],
-        newIntervals[index],
+      [newItems[index], newItems[swapIndex]] = [
+        newItems[swapIndex],
+        newItems[index],
       ];
 
-      return { ...prev, intervals: newIntervals };
+      return { ...prev, items: newItems };
     });
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Workout Builder</h1>
-      <div className="grid gap-4 mb-4">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Workout Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Workout Description</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Workout Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select workout type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={WorkoutType.RUN}>Run</SelectItem>
-                      <SelectItem value={WorkoutType.BIKE}>Bike</SelectItem>
-                      <SelectItem value={WorkoutType.SWIM}>Swim</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </form>
-        </Form>
-      </div>
-      <Reorder.Group
-        axis="y"
-        values={workout.intervals}
-        onReorder={handleReorder}
-      >
-        <div className="grid gap-2 mb-4">
-          {workout.intervals.map((item, index) => (
-            <Reorder.Item key={item.id} value={item}>
-              <IntervalItem
-                item={item}
-                removeInterval={removeInterval}
-                editInterval={editInterval}
-                moveUp={() => moveInterval(item.id, "up")}
-                moveDown={() => moveInterval(item.id, "down")}
-                isFirst={index === 0}
-                isLast={index === workout.intervals.length - 1}
-              />
-            </Reorder.Item>
-          ))}
+    <div className="container mx-auto p-4 max-w-xl">
+      {createWorkoutMutation.isPending ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-12 w-12 animate-spin" />
         </div>
-      </Reorder.Group>
+      ) : (
+        <div className="grid gap-4 mb-4">
+          <Form {...form}>
+            <form onSubmit={handleCreateWorkout} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workout Title</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workout Description</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Workout Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select workout type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={WorkoutType.RUN}>Run</SelectItem>
+                        <SelectItem value={WorkoutType.BIKE}>Bike</SelectItem>
+                        <SelectItem value={WorkoutType.SWIM}>Swim</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+          <div className="grid gap-2">
+            <Reorder.Group
+              axis="y"
+              values={workout.items}
+              onReorder={handleReorder}
+            >
+              <div className="grid gap-2">
+                {workout.items.map((item, index) => {
+                  const workoutItem = item.interval
+                    ? item.interval
+                    : item.repeatGroup;
+                  if (!workoutItem) return null;
+                  if (item.id === undefined) return null;
+                  return (
+                    <Reorder.Item key={item.id} value={item}>
+                      <IntervalItem
+                        item={workoutItem}
+                        removeInterval={() => removeInterval(item.id ?? 0)}
+                        editInterval={() => editInterval(item)}
+                        moveUp={() => moveInterval(item.id ?? 0, "up")}
+                        moveDown={() => moveInterval(item.id ?? 0, "down")}
+                        isFirst={index === 0}
+                        isLast={index === workout.items.length - 1}
+                      />
+                    </Reorder.Item>
+                  );
+                })}
+              </div>
+            </Reorder.Group>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-between items-center mt-4">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isIntervalDialogOpen}
+          onOpenChange={setIsIntervalDialogOpen}
+        >
           <DialogTrigger asChild>
             <Button
+              type="button" // Prevent form submission
+              disabled={createWorkoutMutation.isPending}
               onClick={() => {
                 setEditingItem(null);
-                setIsDialogOpen(true);
+                setIsIntervalDialogOpen(true);
                 setIsRepeatMode(false);
                 setNewInterval({
-                  id: Date.now(),
+                  id: workout.items.length + 1,
                   type: IntervalType.ACTIVE,
-                  duration: {
-                    type: DurationType.TIME,
-                    value: 0,
-                    unit: "minutes",
-                  },
-                  intensityTarget: {
-                    type: IntensityType.NONE,
-                    min: "",
-                    max: "",
-                  },
+                  durationType: DurationType.TIME,
+                  durationValue: 0,
+                  durationUnit: "minutes",
+                  intensityType: IntensityType.NONE,
+                  intensityMin: "",
+                  intensityMax: "",
                 });
                 setNewRepeatGroup({
-                  id: Date.now(),
                   intervals: [newInterval],
                   repeats: 1,
                 });
               }}
             >
-              Add Interval
+              {createWorkoutMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Add Interval"
+              )}
             </Button>
           </DialogTrigger>
           <DialogContent
-            className={`sm:max-w-[425px] ${getIntervalColor(
-              newInterval.type,
-              isRepeatMode
-            )}`}
+            className={`sm:max-w-[425px] ${
+              theme === "dark"
+                ? "bg-gray-800 text-white"
+                : " bg-blue-600 bg-white text-black"
+            }`}
           >
             <DialogHeader>
               <DialogTitle>
@@ -387,24 +534,21 @@ export function WorkoutBuilder() {
                     </div>
                   ))}
                   <Button
+                    type="button" // Prevent form submission
                     onClick={() =>
                       setNewRepeatGroup((prev) => ({
                         ...prev,
                         intervals: [
                           ...prev.intervals,
                           {
-                            id: Date.now(),
+                            id: prev.intervals.length + 1,
                             type: IntervalType.ACTIVE,
-                            duration: {
-                              type: DurationType.TIME,
-                              value: 0,
-                              unit: "minutes",
-                            },
-                            intensityTarget: {
-                              type: IntensityType.NONE,
-                              min: "",
-                              max: "",
-                            },
+                            durationType: DurationType.TIME,
+                            durationValue: 0,
+                            durationUnit: "minutes",
+                            intensityType: IntensityType.NONE,
+                            intensityMin: "",
+                            intensityMax: "",
                           },
                         ],
                       }))
@@ -435,18 +579,14 @@ export function WorkoutBuilder() {
                           setNewRepeatGroup((prev) => ({
                             ...prev,
                             restInterval: {
-                              id: Date.now(),
+                              id: prev.intervals.length + 1,
                               type: IntervalType.REST,
-                              duration: {
-                                type: DurationType.TIME,
-                                value: 0,
-                                unit: "minutes",
-                              },
-                              intensityTarget: {
-                                type: IntensityType.NONE,
-                                min: "",
-                                max: "",
-                              },
+                              durationType: DurationType.TIME,
+                              durationValue: 0,
+                              durationUnit: "minutes",
+                              intensityType: IntensityType.NONE,
+                              intensityMin: "",
+                              intensityMax: "",
                             },
                           }));
                         } else {
@@ -495,7 +635,7 @@ export function WorkoutBuilder() {
                 />
                 <Label htmlFor="enableRepeat">Enable Repeat</Label>
               </div>
-              <Button onClick={updateItem}>
+              <Button type="button" onClick={updateItem}>
                 {editingItem
                   ? "Update"
                   : isRepeatMode
@@ -505,9 +645,58 @@ export function WorkoutBuilder() {
             </div>
           </DialogContent>
         </Dialog>
-        <Button onClick={() => console.log(JSON.stringify(workout, null, 2))}>
-          Submit Workout
+
+        {/* Create Workout Button */}
+        <Button
+          type="button" // Prevent form submission
+          onClick={() => setIsSubmitDialogOpen(true)}
+          disabled={createWorkoutMutation.isPending}
+        >
+          {createWorkoutMutation.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create Workout!!!"
+          )}
         </Button>
+
+        {/* Submit Dialog */}
+        <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Workout</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to create this workout?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button" // Prevent form submission
+                variant="outline"
+                onClick={() => setIsSubmitDialogOpen(false)}
+                disabled={createWorkoutMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit" // Submit the form
+                onClick={handleCreateWorkout}
+                disabled={createWorkoutMutation.isPending}
+              >
+                {createWorkoutMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Confirm"
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ const routes = [
     label: "Workouts",
   },
   {
-    href: "/workouts/create",
+    href: "/create",
     label: "Create",
   },
   {
@@ -59,6 +59,7 @@ const Navigation = () => {
             {routes.map((route) => (
               <Button
                 key={route.href}
+                size="xl"
                 variant={route.href === pathname ? "secondary" : "ghost"}
                 onClick={() => onClick(route.href)}
                 className="w-full justify-start"

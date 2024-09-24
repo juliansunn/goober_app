@@ -1,62 +1,66 @@
-export enum IntervalType {
-  WARMUP = "warmup",
-  COOLDOWN = "cooldown",
-  ACTIVE = "active",
-  REST = "rest",
-}
+import {
+  IntervalType as PrismaIntervalType,
+  WorkoutType as PrismaWorkoutType,
+  DurationType as PrismaDurationType,
+  IntensityType as PrismaIntensityType,
+} from "@prisma/client";
 
-export enum WorkoutType {
-  RUN = "run",
-  BIKE = "bike",
-  SWIM = "swim",
-}
+export const IntervalType = PrismaIntervalType;
+export type IntervalType = (typeof IntervalType)[keyof typeof IntervalType];
 
-export enum DurationType {
-  TIME = "time",
-  DISTANCE = "distance",
-  HEART_RATE = "heartRate",
-  CALORIES = "calories",
-}
+export const WorkoutType = PrismaWorkoutType;
+export type WorkoutType = (typeof WorkoutType)[keyof typeof WorkoutType];
 
-export enum IntensityType {
-  NONE = "none",
-  CADENCE = "cadence",
-  HEART_RATE = "heartRate",
-  POWER = "power",
-  PACE_MILE = "paceMile",
-  PACE_KM = "paceKm",
-  PACE_400M = "pace400m",
-}
+export const DurationType = PrismaDurationType;
+export type DurationType = (typeof DurationType)[keyof typeof DurationType];
 
-export interface Duration {
-  type: DurationType;
-  value: number;
-  unit: string;
-}
+export const IntensityType = PrismaIntensityType;
+export type IntensityType = (typeof IntensityType)[keyof typeof IntensityType];
 
-export interface IntensityTarget {
-  type: IntensityType;
-  min: string;
-  max: string;
-}
-
-export interface Interval {
+export interface User {
   id: number;
+  clerkId: string;
+  username?: string | null;
+  name?: string | null;
+  email?: string | null;
+  workouts?: Workout[]; // Authored workouts
+  favorites?: Workout[]; // Favorited workouts
+}
+
+export type Interval = {
+  id?: number;
   type: IntervalType;
-  duration: Duration;
-  intensityTarget: IntensityTarget;
-}
+  durationType: DurationType;
+  durationValue: number;
+  durationUnit: string;
+  intensityType: IntensityType;
+  intensityMin: string;
+  intensityMax: string;
+};
 
-export interface RepeatGroup {
-  id: number;
+export type RepeatGroup = {
+  id?: number;
   intervals: Interval[];
   repeats: number;
   restInterval?: Interval;
-}
+};
+
+export type WorkoutItem = {
+  id?: number;
+  order: number;
+  interval?: Interval;
+  repeatGroup?: RepeatGroup;
+};
 
 export interface Workout {
+  id?: number;
   title: string;
   description: string;
   type: WorkoutType;
-  intervals: (Interval | RepeatGroup)[];
+  items: WorkoutItem[];
+  author?: User;
+  authorId?: number;
+  favoritedBy?: User[];
+  createdAt?: Date;
+  updatedAt?: Date;
 }
