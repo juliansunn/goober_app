@@ -4,86 +4,13 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { WorkoutBuilder } from "@/components/workout-builder";
-import {
-  DurationType,
-  IntervalType,
-  Workout,
-  WorkoutType,
-} from "@/types/workouts";
+import { Workout } from "@/types/workouts";
 import { Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const workoutTest = {
-  title: "Mile Repeat Track Workout",
-  description:
-    "This workout consists of repeated 1-mile intervals to improve speed and endurance. It is specifically designed for seasoned runners who are looking to enhance their race performance. Ensure to stay hydrated and monitor your pacing throughout the workout. Mental preparation is key; visualize each repeat and focus on maintaining form and technique. Fuel adequately before the workout to sustain energy levels during the repeats.",
-  type: WorkoutType.RUN,
-  items: [
-    {
-      id: 1,
-      order: 1,
-      interval: {
-        type: IntervalType.WARMUP,
-        durationType: "TIME",
-        durationValue: 10,
-        durationUnit: "MINUTES",
-        intensityType: "NONE",
-        intensityMin: "",
-        intensityMax: "",
-      },
-    },
-    {
-      id: 2,
-      order: 2,
-      repeatGroup: {
-        intervals: [
-          {
-            order: 1,
-            interval: {
-              type: IntervalType.ACTIVE,
-              durationType: DurationType.DISTANCE,
-              durationValue: 1,
-              durationUnit: "MILES",
-              intensityType: "PACE_MILE",
-              intensityMin: "5:30",
-              intensityMax: "6:30",
-            },
-          },
-          {
-            order: 2,
-            interval: {
-              type: IntervalType.REST,
-              durationType: DurationType.TIME,
-              durationValue: 3,
-              durationUnit: "MINUTES",
-              intensityType: "NONE",
-              intensityMin: "",
-              intensityMax: "",
-            },
-          },
-        ],
-        repeats: 5,
-      },
-    },
-    {
-      id: 3,
-      order: 3,
-      interval: {
-        type: IntervalType.COOLDOWN,
-        durationType: DurationType.TIME,
-        durationValue: 10,
-        durationUnit: "MINUTES",
-        intensityType: "NONE",
-        intensityMin: "",
-        intensityMax: "",
-      },
-    },
-  ],
-};
-
 const Explore = () => {
   const [prompt, setPrompt] = useState("");
-  const [workout, setWorkout] = useState<Workout | null>(workoutTest);
+  const [workout, setWorkout] = useState<Workout | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePromptSubmit = async (e: React.FormEvent) => {
