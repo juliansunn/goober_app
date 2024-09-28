@@ -1,10 +1,19 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Star, ChevronDown, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import React, { useState } from "react";
+import {
+  Star,
+  ChevronDown,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { RiBikeLine, RiRunLine } from "react-icons/ri";
+import { LiaSwimmerSolid } from "react-icons/lia";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -12,18 +21,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card"
+} from "@/components/ui/hover-card";
 import {
   ColumnDef,
   flexRender,
@@ -33,83 +42,79 @@ import {
   SortingState,
   getPaginationRowModel,
   getFilteredRowModel,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
+import { Workout, WorkoutType } from "@/types/workouts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useDeleteWorkout } from "@/hooks/use-delete-workout";
+import { ConfirmationDialog } from "@/components/confirm-dialog";
 
-type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced'
-
-interface Workout {
-  id: number
-  title: string
-  description: string
-  skillLevel: SkillLevel
-  popularity: number
-  duration: string
-}
-
-const workouts: Workout[] = [
-  {
-    id: 1,
-    title: "Full Body HIIT",
-    description: "High-intensity interval training targeting all major muscle groups for a complete body workout.",
-    skillLevel: "Intermediate",
-    popularity: 95,
-    duration: "30 minutes"
-  },
-  {
-    id: 2,
-    title: "Yoga for Beginners",
-    description: "A gentle introduction to basic yoga poses and breathing techniques for improved flexibility and relaxation.",
-    skillLevel: "Beginner",
-    popularity: 88,
-    duration: "45 minutes"
-  },
-  {
-    id: 3,
-    title: "Advanced Powerlifting",
-    description: "Intense strength training focusing on squat, bench press, and deadlift for experienced lifters.",
-    skillLevel: "Advanced",
-    popularity: 92,
-    duration: "1 hour"
-  },
-  {
-    id: 4,
-    title: "Cardio Kickboxing",
-    description: "A high-energy workout combining martial arts techniques with fast-paced cardio for improved stamina and coordination.",
-    skillLevel: "Intermediate",
-    popularity: 90,
-    duration: "45 minutes"
-  },
-  {
-    id: 5,
-    title: "Senior Fitness",
-    description: "Low-impact exercises designed to improve balance, flexibility, and strength for older adults.",
-    skillLevel: "Beginner",
-    popularity: 85,
-    duration: "30 minutes"
-  },
-]
+type SkillLevel = "Beginner" | "Intermediate" | "Advanced";
 
 const truncateDescription = (description: string, maxLength: number) => {
-  if (description.length <= maxLength) return description
-  return description.slice(0, maxLength) + '...'
-}
+  if (description.length <= maxLength) return description;
+  return description.slice(0, maxLength) + "...";
+};
 
 const getSkillLevelColor = (skillLevel: SkillLevel) => {
   switch (skillLevel) {
-    case 'Beginner':
-      return 'bg-green-100 text-green-800'
-    case 'Intermediate':
-      return 'bg-yellow-100 text-yellow-800'
-    case 'Advanced':
-      return 'bg-red-100 text-red-800'
+    case "Beginner":
+      return "bg-green-100 text-green-800";
+    case "Intermediate":
+      return "bg-yellow-100 text-yellow-800";
+    case "Advanced":
+      return "bg-red-100 text-red-800";
   }
+};
+
+export interface WorkoutTableProps {
+  workouts: Workout[];
+  currentPage: number;
+  totalPages: number;
+  limit: number;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
 }
 
-export function WorkoutTable() {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [globalFilter, setGlobalFilter] = React.useState('')
+export function WorkoutTable({
+  workouts,
+  currentPage,
+  totalPages,
+  limit,
+  onPageChange,
+  onLimitChange,
+}: WorkoutTableProps) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
+  const deleteWorkoutMutation = useDeleteWorkout();
 
   const columns: ColumnDef<Workout>[] = [
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => {
+        const workoutType = row.getValue("type") as string;
+        return (
+          <div className="flex items-center justify-center">
+            {workoutType === WorkoutType.SWIM && (
+              <LiaSwimmerSolid className="w-4 h-4 mr-2" />
+            )}
+            {workoutType === WorkoutType.BIKE && (
+              <RiBikeLine className="w-4 h-4 mr-2" />
+            )}
+            {workoutType === WorkoutType.RUN && (
+              <RiRunLine className="w-4 h-4 mr-2" />
+            )}
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "title",
       header: "Title",
@@ -130,49 +135,52 @@ export function WorkoutTable() {
       accessorKey: "skillLevel",
       header: "Skill Level",
       cell: ({ row }) => {
-        const skillLevel = row.getValue("skillLevel") as SkillLevel
+        const skillLevel = row.getValue("skillLevel") as SkillLevel;
         return (
-          <Badge className={getSkillLevelColor(skillLevel)}>
-            {skillLevel}
-          </Badge>
-        )
+          <Badge className={getSkillLevelColor("Advanced")}>SKILL LEVEL</Badge>
+        );
       },
     },
     {
       accessorKey: "popularity",
       header: "Popularity",
       cell: ({ row }) => {
-        const popularity = row.getValue("popularity") as number
+        const popularity = row.getValue("popularity") as number;
         return (
           <div className="flex items-center justify-end">
             <Star className="w-4 h-4 text-yellow-400 mr-1" />
             <span>{popularity}%</span>
           </div>
-        )
+        );
       },
     },
     {
       id: "actions",
       cell: ({ row }) => {
-        const workout = row.original
+        const workout = row.original;
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>View details</DropdownMenuItem>
-              <DropdownMenuItem>Add to favorites</DropdownMenuItem>
-              <DropdownMenuItem>Share</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>View details</DropdownMenuItem>
+                <DropdownMenuItem>Add to favorites</DropdownMenuItem>
+                <DropdownMenuItem>Share</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setWorkoutToDelete(workout)}>
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
       },
     },
-  ]
+  ];
 
   const table = useReactTable({
     data: workouts,
@@ -187,7 +195,7 @@ export function WorkoutTable() {
       sorting,
       globalFilter,
     },
-  })
+  });
 
   return (
     <div className="container mx-auto py-10">
@@ -223,30 +231,56 @@ export function WorkoutTable() {
               table.getRowModel().rows.map((row) => (
                 <HoverCard key={row.id}>
                   <HoverCardTrigger asChild>
-                    <TableRow className="cursor-pointer">
+                    <TableRow
+                      className="cursor-pointer"
+                      onClick={() =>
+                        (window.location.href = `/workouts/${row.original.id}`)
+                      }
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
                   </HoverCardTrigger>
                   <HoverCardContent className="w-80">
                     <div className="space-y-2">
-                      <h4 className="text-sm font-semibold">{row.original.title}</h4>
+                      <h4 className="text-sm font-semibold">
+                        {row.original.title}
+                      </h4>
                       <p className="text-sm">{row.original.description}</p>
                       <div className="flex items-center pt-2">
-                        <Badge className={`${getSkillLevelColor(row.original.skillLevel)} mr-2`}>
-                          {row.original.skillLevel}
+                        <Badge
+                          className={`${getSkillLevelColor("Advanced")} mr-2`}
+                        >
+                          SKILL LEVEL
                         </Badge>
                         <span className="flex items-center text-sm text-muted-foreground">
                           <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                          {row.original.popularity}% popularity
+                          10% popularity
                         </span>
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground pt-2">
                         <Clock className="w-4 h-4 mr-2" />
-                        Duration: {row.original.duration}
+                        Duration: 60 minutes
+                      </div>
+                      <div className="flex items-center text-sm text-muted-foreground pt-2">
+                        {row.original.type === WorkoutType.SWIM && (
+                          <LiaSwimmerSolid className="w-4 h-4 mr-2" />
+                        )}
+                        {row.original.type === WorkoutType.BIKE && (
+                          <RiBikeLine className="w-4 h-4 mr-2" />
+                        )}
+                        {row.original.type === WorkoutType.RUN && (
+                          <RiRunLine className="w-4 h-4 mr-2" />
+                        )}
+                        <span className="capitalize">
+                          Type: {row.original.type}
+                        </span>
                       </div>
                     </div>
                   </HoverCardContent>
@@ -254,7 +288,10 @@ export function WorkoutTable() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -262,26 +299,64 @@ export function WorkoutTable() {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+      <ConfirmationDialog
+        isOpen={!!workoutToDelete}
+        onClose={() => setWorkoutToDelete(null)}
+        onConfirm={() => {
+          if (workoutToDelete?.id) {
+            deleteWorkoutMutation.mutate(workoutToDelete.id.toString());
+            setWorkoutToDelete(null);
+          }
+        }}
+        title="Delete Workout"
+        description={`Are you sure you want to delete the workout "${workoutToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center space-x-2">
+          <span>Show</span>
+          <Select
+            value={limit.toString()}
+            onValueChange={(value) => onLimitChange(Number(value))}
+          >
+            <SelectTrigger className="w-[70px]">
+              <SelectValue>{limit}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {[10, 20, 30, 40, 50].map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>per page</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <div className="mr-4">
+            Page {currentPage} of {totalPages}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

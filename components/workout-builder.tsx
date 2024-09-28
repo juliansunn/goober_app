@@ -24,7 +24,18 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Reorder } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, Bot } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import * as z from "zod";
 
@@ -62,6 +73,8 @@ import {
 import { toast } from "sonner";
 import { WorkoutType } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
+import { MarkdownInput } from "@/components/markdown-input";
+import { EditableField } from "@/components/editable-field";
 
 interface WorkoutBuilderProps {
   initialWorkout?: Workout;
@@ -95,6 +108,8 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
     repeats: 1,
   });
   const [editingItem, setEditingItem] = useState<WorkoutItem | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   const form = useForm<CreateWorkoutInput>({
     resolver: zodResolver(createWorkoutSchema),
@@ -167,6 +182,45 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
       setWorkout(initialWorkout);
     }
   }, [initialWorkout, form]);
+
+  const handlePromptSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAiLoading(true);
+    console.log("aiPrompt", prompt);
+
+    try {
+      const response = await fetch("/api/generate-workout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("data", data);
+
+      // Update the workout state
+      setWorkout(data.workout);
+
+      // Update the form values
+      form.reset({
+        title: data.workout.title,
+        description: data.workout.description,
+        type: data.workout.type,
+        items: data.workout.items,
+      });
+    } catch (error) {
+      console.error("Error generating workout:", error);
+      toast("error");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   const createWorkoutMutation = useMutation({
     mutationFn: createWorkout,
@@ -341,6 +395,47 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
 
   return (
     <div className="container mx-auto p-4 max-w-xl">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Workout Builder</h2>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Bot className="h-6 w-6" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <form onSubmit={handlePromptSubmit} className="space-y-4">
+                    <h3 className="font-semibold">AI Workout Assistant</h3>
+                    <Textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Describe the workout you want (e.g., '30-minute HIIT for beginners')"
+                      disabled={isAiLoading}
+                    />
+                    <Button type="submit" disabled={isAiLoading}>
+                      {isAiLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate Workout"
+                      )}
+                    </Button>
+                  </form>
+                </PopoverContent>
+              </Popover>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Need help creating your workout?</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+
       {createWorkoutMutation.isPending ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-12 w-12 animate-spin" />
@@ -354,22 +449,9 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Workout Title</FormLabel>
+                    <FormLabel className="text-lg font-bold">Title</FormLabel>
                     <FormControl>
                       <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Workout Description</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -380,7 +462,7 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Workout Type</FormLabel>
+                    <FormLabel className="text-lg font-bold">Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -396,6 +478,24 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
                         <SelectItem value={WorkoutType.SWIM}>Swim</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <MarkdownInput
+                        isEditable={true}
+                        value={field.value}
+                        onChange={field.onChange}
+                        label="Description"
+                        // placeholder="Describe your workout"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -658,7 +758,7 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
               Creating...
             </>
           ) : (
-            "Create Workout!!!"
+            "Create Workout"
           )}
         </Button>
 

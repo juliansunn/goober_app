@@ -60,7 +60,7 @@ const workoutSchema = z.object({
   title: z.string(),
   description: z.string(),
   type: WorkoutTypeSchema,
-  items: z.union([intervalSchema, repeatGroupSchema]),
+  items: z.array(z.union([intervalSchema, repeatGroupSchema])),
 });
 
 const workoutJsonSchema = zodToJsonSchema(workoutSchema, "workoutSchema");
@@ -80,7 +80,7 @@ export async function POST(req: Request, res: NextResponse) {
     const systemPrompt = `
       You are a seasoned endurance coach with significant experience in running, biking, swimming, and triathlon. Generate a workout based on the user's prompt, and output it in the following JSON schema without deviation.
       Please use the RepeatGroup resource in favor of listing intervals when building a workout that has repeated intervals.  Pay close attention to the type of workous one is initially requesting, and pick between the types of available workouts in the Workout type enum.
-      You should also give a detailed description of the workout, and include detials on how the user should prepare for the workokut mentally and physically.  You should also include how to best execute the workout.  Include additional information regarding form and fueling techniques
+      You should also give a detailed description of the workout, and include detials on how the user should prepare for the workokut mentally and physically.  You should also include how to best execute the workout.  Include additional information regarding form and fueling techniques.  This field is a markdown field, so use it to your advantage to format your response.
       `;
 
     const completion = await openai.chat.completions.create({

@@ -64,3 +64,9 @@ export interface Workout {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface ScheduledWorkout extends Workout {
+  start: Date;
+  end: Date;
+  user?: User;
+}

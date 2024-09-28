@@ -30,7 +30,7 @@ model Workout {
   title       String
   description String
   type        WorkoutType
-  items       WorkoutItem[]
+  items       WorkoutItem[] @relation("WorkoutToWorkoutItem")
   author      User          @relation("AuthoredWorkouts", fields: [authorId], references: [id])
   authorId    Int
   favoritedBy User?         @relation("FavoritedWorkouts", fields: [userId], references: [id])
@@ -41,7 +41,7 @@ model Workout {
 
 model WorkoutItem {
   id          Int          @id @default(autoincrement())
-  workout     Workout      @relation(fields: [workoutId], references: [id])
+  workout     Workout      @relation("WorkoutToWorkoutItem", fields: [workoutId], references: [id], onDelete: Cascade)
   workoutId   Int
   order       Int
   interval    Interval?
@@ -57,9 +57,9 @@ model Interval {
   intensityType IntensityType
   intensityMin  String?
   intensityMax  String?
-  workoutItem   WorkoutItem?  @relation(fields: [workoutItemId], references: [id])
+  workoutItem   WorkoutItem?  @relation(fields: [workoutItemId], references: [id], onDelete: Cascade)
   workoutItemId Int?          @unique
-  repeatGroup   RepeatGroup?  @relation(fields: [repeatGroupId], references: [id])
+  repeatGroup   RepeatGroup?  @relation(fields: [repeatGroupId], references: [id], onDelete: Cascade)
   repeatGroupId Int?
 }
 
@@ -67,7 +67,7 @@ model RepeatGroup {
   id            Int         @id @default(autoincrement())
   repeats       Int
   intervals     Interval[]
-  workoutItem   WorkoutItem @relation(fields: [workoutItemId], references: [id])
+  workoutItem   WorkoutItem @relation(fields: [workoutItemId], references: [id], onDelete: Cascade)
   workoutItemId Int         @unique
 }
 

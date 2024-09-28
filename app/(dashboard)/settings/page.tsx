@@ -1,11 +1,10 @@
-import React from 'react'
+import { SettingsPageComponent } from "@/components/settings-page";
+import React from "react";
 
-type Props = {}
+type Props = {};
 
 const Settings = (props: Props) => {
-  return (
-    <div>Settings</div>
-  )
-}
+  return <SettingsPageComponent />;
+};
 
-export default Settings
+export default Settings;

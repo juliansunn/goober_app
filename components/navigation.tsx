@@ -14,6 +14,10 @@ const routes = [
     label: "Home",
   },
   {
+    href: "/calendar",
+    label: "Calendar",
+  },
+  {
     href: "/workouts",
     label: "Workouts",
   },
