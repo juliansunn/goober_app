@@ -8,6 +8,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { ErrorDisplay } from "@/components/error-display";
+import { LoadingCenter } from "@/components/loading-center";
 
 interface WorkoutsResponse {
   workouts: Workout[];
@@ -17,7 +18,11 @@ interface WorkoutsResponse {
   hasMore: boolean;
 }
 
-const Workouts: React.FC = () => {
+interface WorkoutsProps {
+  onSelectWorkout?: (workoutId: number) => void;
+}
+
+export default function Workouts({ onSelectWorkout }: WorkoutsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
@@ -47,12 +52,14 @@ const Workouts: React.FC = () => {
     );
   };
 
+  const handleWorkoutSelect = (workoutId: number) => {
+    if (onSelectWorkout) {
+      onSelectWorkout(workoutId);
+    }
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
+    return <LoadingCenter />;
   }
 
   if (error) {
@@ -73,6 +80,4 @@ const Workouts: React.FC = () => {
       onLimitChange={handleLimitChange}
     />
   );
-};
-
-export default Workouts;
+}

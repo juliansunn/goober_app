@@ -6,6 +6,7 @@ import { WorkoutBuilder } from "@/components/workout-builder";
 import { getWorkoutById } from "@/functions/workouts";
 import { Loader2 } from "lucide-react";
 import { ErrorDisplay } from "@/components/error-display";
+import { LoadingCenter } from "@/components/loading-center";
 
 export default function WorkoutDetails({ workoutId }: { workoutId: string }) {
   const {
@@ -19,11 +20,7 @@ export default function WorkoutDetails({ workoutId }: { workoutId: string }) {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
+    return <LoadingCenter />;
   }
 
   if (error) {
