@@ -83,7 +83,7 @@ const Explore = () => {
 
       {workout && (
         <div>
-          <WorkoutBuilder initialWorkout={workout} />
+          <WorkoutBuilder existingWorkout={workout} />
         </div>
       )}
     </div>

@@ -1,10 +1,9 @@
-import { NextApiRequest } from "next";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 // GET /api/scheduled-workouts/:scheduledWorkoutId
 export async function GET(
-  request: NextApiRequest,
+  request: NextRequest,
   { params }: { params: { scheduledWorkoutId: string } }
 ) {
   const { scheduledWorkoutId } = params;
@@ -21,7 +20,7 @@ export async function GET(
 
 // DELETE /api/scheduled-workouts/:scheduledWorkoutId
 export async function DELETE(
-  request: NextApiRequest,
+  request: NextRequest,
   { params }: { params: { scheduledWorkoutId: string } }
 ) {
   const { scheduledWorkoutId } = params;
