@@ -22,14 +22,10 @@ export function CalendarComponent() {
     queryFn: () => getScheduledWorkoutsList({ startDate, endDate }),
     staleTime: Infinity, // Keep the data fresh indefinitely
   });
-  console.log("startDate", startDate);
-  console.log("endDate", endDate);
 
   useEffect(() => {
     // Refetch data when date range changes
     refetch();
-    console.log("startDate: in refetch", startDate);
-    console.log("endDate: in refetch", endDate);
   }, [startDate, endDate, refetch]);
 
   if (isLoading) {

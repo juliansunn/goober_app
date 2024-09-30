@@ -79,7 +79,6 @@ export function WorkoutCalendarComponent({
     useState(false);
 
   const queryClient = useQueryClient();
-  console.log("initialWorkouts", initialWorkouts);
 
   const createScheduledWorkoutMutation = useMutation({
     mutationFn: async ({
@@ -313,20 +312,15 @@ export function WorkoutCalendarComponent({
             <div className={`p-1 rounded ${colorClass} flex items-center`}>
               {getIcon()}
               <span className="text-xs truncate">{event.workout.title}</span>
-              <span className="text-xs ml-auto">{event.scheduledAt}</span>
+              <span className="text-xs ml-auto">
+                {format(event.scheduledAt, "MMM d, yyyy")}
+              </span>
             </div>
           </TooltipTrigger>
           <TooltipContent>
             <Card className="p-2 max-w-xs">
               <h3 className="font-bold">{event.workout.title}</h3>
               <p className="text-sm">{event.workout.description}</p>
-              {/* <ul className="text-xs mt-2">
-                {event.workout.items.map((item, index) => (
-                  <li key={index}>
-                    {item.interval.durationValue} {item.interval.durationUnit} - {item.interval.type}
-                  </li>
-                ))}
-              </ul> */}
             </Card>
           </TooltipContent>
         </Tooltip>
@@ -335,8 +329,6 @@ export function WorkoutCalendarComponent({
   };
 
   const handleSaveScheduledWorkout = (workoutId: number) => {
-    console.log("workoutId", workoutId);
-    console.log("selectedDate", selectedDate);
     if (!selectedDate) return;
 
     createScheduledWorkoutMutation.mutate({

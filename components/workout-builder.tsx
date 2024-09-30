@@ -142,7 +142,6 @@ export function WorkoutBuilder({
   const handlePromptSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAiLoading(true);
-    console.log("aiPrompt", prompt);
 
     try {
       const response = await fetch("/api/generate-workout", {
