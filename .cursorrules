@@ -1,0 +1,40 @@
+// Next.js App Router .cursorrules
+
+// Next.js App Router best practices
+const nextjsAppRouterBestPractices = [
+"Use server components by default",
+"Implement client components only when necessary",
+"Utilize the new file-based routing system",
+"Use layout.js for shared layouts",
+"Implement loading.js for loading states",
+"Use error.js for error handling",
+"Utilize route handlers for API routes",
+];
+
+// Folder structure
+const folderStructure = `app/
+  layout.js
+  page.js
+  components/
+  lib/
+  styles/
+public/`;
+
+// Additional instructions
+const additionalInstructions = `
+
+1. Use TypeScript for type safety
+2. Implement proper metadata for SEO
+3. Utilize Next.js Image component for optimized images
+4. Tailwind CSS for styling and if needed, use CSS Modules
+5. Implement proper error boundaries
+6. Follow Next.js naming conventions for special files
+7. Use environment variables for configuration
+8. Use Next.js API routes for API endpoints
+9. Implement proper authentication and authorization
+10. Use Next.js Link component for navigation
+11. Implement proper data fetching strategies
+12. Use prisma for database operations
+13. Use clerk for authentication
+14. Use react-query for data fetching
+    `;

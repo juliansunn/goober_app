@@ -16,27 +16,95 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  clerkId   String    @unique
-  username  String?
-  name      String?
-  email     String?   @unique
-  workouts  Workout[] @relation("AuthoredWorkouts")
-  favorites Workout[] @relation("FavoritedWorkouts")
+  id                     Int                     @id @default(autoincrement())
+  clerkId                String                  @unique
+  username               String?
+  name                   String?
+  email                  String?                 @unique
+  workouts               Workout[]               @relation("AuthoredWorkouts")
+  favorites              Workout[]               @relation("FavoritedWorkouts")
+  scheduledWorkouts      ScheduledWorkout[]
+  userPerformanceMetrics UserPerformanceMetric[]
+  userRacePRs            UserRacePR[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+}
+
+enum Discipline {
+  RUN
+  BIKE
+  SWIM
+  TRIATHLON
+}
+
+model PerformanceMetricType {
+  id        Int                     @id @default(autoincrement())
+  name      String                  @unique
+  unit      String?
+  metrics   UserPerformanceMetric[]
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+}
+
+model UserPerformanceMetric {
+  id                    Int                   @id @default(autoincrement())
+  user                  User                  @relation(fields: [userId], references: [id])
+  userId                Int
+  performanceMetricType PerformanceMetricType @relation(fields: [metricTypeId], references: [id])
+  metricTypeId          Int
+  value                 Float
+  dateAchieved          DateTime
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+}
+
+model RaceType {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique
+  distance   Float // in meters
+  discipline Discipline
+  prRecords  UserRacePR[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+model UserRacePR {
+  id           Int      @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+  raceType     RaceType @relation(fields: [raceTypeId], references: [id])
+  raceTypeId   Int
+  time         Float // duration in seconds
+  dateAchieved DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ScheduledWorkout {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  workout     Workout  @relation(fields: [workoutId], references: [id])
+  workoutId   Int
+  scheduledAt DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Workout {
-  id          Int           @id @default(autoincrement())
-  title       String
-  description String
-  type        WorkoutType
-  items       WorkoutItem[] @relation("WorkoutToWorkoutItem")
-  author      User          @relation("AuthoredWorkouts", fields: [authorId], references: [id])
-  authorId    Int
-  favoritedBy User?         @relation("FavoritedWorkouts", fields: [userId], references: [id])
-  userId      Int?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id                Int                @id @default(autoincrement())
+  title             String
+  description       String
+  type              WorkoutType
+  items             WorkoutItem[]      @relation("WorkoutToWorkoutItem")
+  author            User               @relation("AuthoredWorkouts", fields: [authorId], references: [id])
+  authorId          Int
+  favoritedBy       User?              @relation("FavoritedWorkouts", fields: [userId], references: [id])
+  userId            Int?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  scheduledWorkouts ScheduledWorkout[]
 }
 
 model WorkoutItem {

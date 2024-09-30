@@ -4,7 +4,7 @@ import prisma from "@lib/prisma";
 import { CreateWorkoutInput } from "@/schemas/workout-schema";
 import { Prisma, WorkoutType } from "@prisma/client";
 
-async function getOrCreateUser(clerkId: string, userInfo: any) {
+export async function getOrCreateUser(clerkId: string, userInfo: any) {
   return await prisma.user.upsert({
     where: { clerkId },
     update: {},

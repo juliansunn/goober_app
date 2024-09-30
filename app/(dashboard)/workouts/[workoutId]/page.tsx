@@ -35,5 +35,5 @@ export default function WorkoutPage() {
     return <ErrorDisplay title="Not Found" message="Workout not found" />;
   }
 
-  return <WorkoutBuilder initialWorkout={workout} />;
+  return <WorkoutBuilder existingWorkout={workout} />;
 }

@@ -77,13 +77,15 @@ import { MarkdownInput } from "@/components/markdown-input";
 import { EditableField } from "@/components/editable-field";
 
 interface WorkoutBuilderProps {
-  initialWorkout?: Workout;
+  existingWorkout?: Workout | null;
 }
 
-export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
+export function WorkoutBuilder({
+  existingWorkout = null,
+}: WorkoutBuilderProps) {
   const { theme } = useTheme();
   const [workout, setWorkout] = useState<Workout>(
-    initialWorkout || {
+    existingWorkout || {
       title: "",
       description: "",
       type: WorkoutType.RUN,
@@ -111,77 +113,29 @@ export function WorkoutBuilder({ initialWorkout }: WorkoutBuilderProps) {
   const [prompt, setPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
 
+  const defaultEmptyWorkout = {
+    title: "",
+    description: "",
+    type: WorkoutType.RUN,
+    items: [],
+  };
+
   const form = useForm<CreateWorkoutInput>({
     resolver: zodResolver(createWorkoutSchema),
-    defaultValues: {
-      title: initialWorkout?.title || "",
-      description: initialWorkout?.description || "",
-      type: initialWorkout?.type || WorkoutType.RUN,
-      items:
-        initialWorkout?.items
-          .filter((item) => item.interval || item.repeatGroup)
-          .map((item) => ({
-            order: item.order,
-            interval: item.interval
-              ? {
-                  type: item.interval.type,
-                  durationType: item.interval.durationType,
-                  durationValue: item.interval.durationValue ?? 0,
-                  durationUnit: item.interval.durationUnit || "minutes",
-                  intensityType: item.interval.intensityType,
-                  intensityMin: item.interval.intensityMin || "",
-                  intensityMax: item.interval.intensityMax || "",
-                }
-              : undefined,
-            repeatGroup: item.repeatGroup
-              ? {
-                  repeats: item.repeatGroup.repeats,
-                  intervals: item.repeatGroup.intervals
-                    .filter(Boolean)
-                    .map((interval) => ({
-                      type: interval.type,
-                      durationType: interval.durationType,
-                      durationValue: interval.durationValue ?? 0,
-                      durationUnit: interval.durationUnit || "minutes",
-                      intensityType: interval.intensityType,
-                      intensityMin: interval.intensityMin || "",
-                      intensityMax: interval.intensityMax || "",
-                    })),
-                  restInterval: item.repeatGroup.restInterval
-                    ? {
-                        type: item.repeatGroup.restInterval.type,
-                        durationType:
-                          item.repeatGroup.restInterval.durationType,
-                        durationValue:
-                          item.repeatGroup.restInterval.durationValue ?? 0,
-                        durationUnit:
-                          item.repeatGroup.restInterval.durationUnit ||
-                          "minutes",
-                        intensityType:
-                          item.repeatGroup.restInterval.intensityType,
-                        intensityMin:
-                          item.repeatGroup.restInterval.intensityMin || "",
-                        intensityMax:
-                          item.repeatGroup.restInterval.intensityMax || "",
-                      }
-                    : undefined,
-                }
-              : undefined,
-          })) || [],
-    },
+    defaultValues: existingWorkout ?? defaultEmptyWorkout,
   });
 
-  // Use useEffect to update form values when initialWorkout changes
+  // Use useEffect to update form values when existingWorkout changes
   useEffect(() => {
-    if (initialWorkout) {
+    if (existingWorkout) {
       form.reset({
-        title: initialWorkout.title,
-        description: initialWorkout.description,
-        type: initialWorkout.type,
+        title: existingWorkout.title,
+        description: existingWorkout.description,
+        type: existingWorkout.type,
       });
-      setWorkout(initialWorkout);
+      setWorkout(existingWorkout);
     }
-  }, [initialWorkout, form]);
+  }, [existingWorkout, form]);
 
   const handlePromptSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

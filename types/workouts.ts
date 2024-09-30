@@ -66,7 +66,7 @@ export interface Workout {
 }
 
 export interface ScheduledWorkout extends Workout {
-  start: Date;
-  end: Date;
-  user?: User;
+  scheduledAt: Date;
+  user: User;
+  workout: Workout;
 }

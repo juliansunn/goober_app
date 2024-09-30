@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && prisma migrate deploy",
+    "devdb": "docker compose up -d && prisma migrate dev"
   },
   "dependencies": {
     "@clerk/nextjs": "^5.0.12",
@@ -38,6 +39,7 @@
     "@types/react-big-calendar": "^1.8.12",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.438.0",
     "moment": "^2.30.1",

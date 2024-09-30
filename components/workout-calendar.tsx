@@ -21,14 +21,17 @@ import { Label } from "@/components/ui/label";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Calendar, momentLocalizer, SlotInfo } from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import { ScheduledWorkout, Workout, WorkoutType } from "@/types/workouts";
+import { ScheduledWorkout, WorkoutType } from "@/types/workouts";
 import { RiBikeLine, RiRunLine } from "react-icons/ri";
 import { LiaSwimmerSolid } from "react-icons/lia";
 import { getWorkoutColor } from "@/lib/workout-utils";
 import { WorkoutBuilder } from "@/components/workout-builder";
+import { format } from "date-fns";
 
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
 
 const DnDCalendar = withDragAndDrop(Calendar);
 
@@ -54,32 +57,59 @@ export function WorkoutCalendarComponent({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
   const [isEditWorkoutOpen, setIsEditWorkoutOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isSelectingExistingWorkout, setIsSelectingExistingWorkout] =
+    useState(false);
 
-  const handleAddWorkout = (workout: Workout) => {
-    const scheduledWorkout: ScheduledWorkout = {
-      ...workout,
-      id: workouts.length + 1,
-      start: newWorkout.start,
-      end: new Date(newWorkout.start.getTime() + 60 * 60 * 1000), // 1 hour later
+  // const handleAddWorkout = (workout: Workout) => {
+  //   const scheduledWorkout: ScheduledWorkout = {
+  //     ...workout,
+  //     id: workouts.length + 1,
+  //     scheduledAt: newWorkout.start,
+  //   };
+  //   setWorkouts([...workouts, scheduledWorkout]);
+  //   setIsAddingWorkout(false);
+  //   setNewWorkout({
+  //     title: "",
+  //     type: WorkoutType.RUN,
+  //     description: "",
+  //     items: [],
+  //     start: new Date(),
+  //     end: new Date(),
+  //   });
+  // };
+
+  const DayCell = ({ date }: { date: Date }) => {
+    const handleAddWorkout = () => {
+      setNewWorkout({
+        ...newWorkout,
+        start: date,
+        end: new Date(date.getTime() + 60 * 60 * 1000), // Set end time to 1 hour after start
+      });
+      setIsAddingWorkout(true);
     };
-    setWorkouts([...workouts, scheduledWorkout]);
-    setIsAddingWorkout(false);
-    setNewWorkout({
-      title: "",
-      type: WorkoutType.RUN,
-      description: "",
-      items: [],
-      start: new Date(),
-      end: new Date(),
-    });
+
+    return (
+      <div className="flex justify-between items-center p-1">
+        <span>{date.getDate()}</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-4 w-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddWorkout();
+          }}
+        >
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
+    );
   };
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
-    setNewWorkout({
-      ...newWorkout,
-      start: slotInfo.start,
-      end: new Date(slotInfo.start.getTime() + 60 * 60 * 1000),
-    });
+    setSelectedDate(slotInfo.start);
     setIsAddingWorkout(true);
   };
 
@@ -233,6 +263,36 @@ export function WorkoutCalendarComponent({
     );
   };
 
+  const handleSaveScheduledWorkout = async (workoutId: number) => {
+    if (!selectedDate) return;
+
+    try {
+      const response = await fetch("/api/scheduled-workouts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workoutId,
+          scheduledAt: selectedDate.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save scheduled workout");
+      }
+
+      const savedScheduledWorkout = await response.json();
+      // Update the workouts state with the new scheduled workout
+      setWorkouts([...workouts, savedScheduledWorkout]);
+      setIsAddingWorkout(false);
+      toast.success("Workout scheduled successfully");
+    } catch (error) {
+      console.error("Error saving scheduled workout:", error);
+      toast.error("Failed to schedule workout");
+    }
+  };
+
   return (
     <div className="h-screen p-4 bg-background flex">
       <div
@@ -251,6 +311,9 @@ export function WorkoutCalendarComponent({
           components={{
             toolbar: CustomToolbar,
             event: EventComponent,
+            month: {
+              dateHeader: DayCell,
+            },
           }}
           eventPropGetter={eventStyleGetter}
           onSelectSlot={handleSelectSlot}
@@ -264,16 +327,46 @@ export function WorkoutCalendarComponent({
       {isAddingWorkout && (
         <div className="w-96 h-full fixed right-0 top-0 bg-background border-l border-border p-4 overflow-y-auto">
           <h2 className="text-xl font-bold mb-4">Add New Workout</h2>
-          <WorkoutBuilder
-            initialWorkout={
-              selectedWorkout || {
-                title: "",
-                type: WorkoutType.RUN,
-                description: "",
-                items: [],
+          <div className="mb-4">
+            <Label htmlFor="workout-date">Date and Time</Label>
+            <Input
+              id="workout-date"
+              type="datetime-local"
+              value={
+                selectedDate ? format(selectedDate, "yyyy-MM-dd'T'HH:mm") : ""
               }
-            }
-          />
+              onChange={(e) => setSelectedDate(new Date(e.target.value))}
+              className="mb-2"
+            />
+            <Button
+              onClick={() =>
+                setIsSelectingExistingWorkout(!isSelectingExistingWorkout)
+              }
+              variant="outline"
+              className="w-full"
+            >
+              {isSelectingExistingWorkout
+                ? "Create New Workout"
+                : "Select Existing Workout"}
+            </Button>
+          </div>
+          {isSelectingExistingWorkout ? (
+            <div>
+              {/* Implement existing workout selection UI here */}
+              <p>Existing workout selection UI to be implemented</p>
+            </div>
+          ) : (
+            <WorkoutBuilder
+              existingWorkout={
+                selectedWorkout || {
+                  title: "",
+                  type: WorkoutType.RUN,
+                  description: "",
+                  items: [],
+                }
+              }
+            />
+          )}
           <Button
             onClick={() => setIsAddingWorkout(false)}
             variant="outline"
