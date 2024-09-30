@@ -76,6 +76,26 @@ export async function GET(request: Request) {
           lte: endDate,
         },
       },
+      include: {
+        workout: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            type: true,
+            items: {
+              include: {
+                repeatGroup: {
+                  include: {
+                    intervals: true,
+                  },
+                },
+                interval: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return NextResponse.json(scheduledWorkouts);

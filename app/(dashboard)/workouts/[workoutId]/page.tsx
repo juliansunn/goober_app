@@ -1,39 +1,29 @@
-"use client";
-
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { WorkoutBuilder } from "@/components/workout-builder";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import WorkoutDetails from "./workout-details";
 import { getWorkoutById } from "@/functions/workouts";
-import { useParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { ErrorDisplay } from "@/components/error-display";
 
-export default function WorkoutPage() {
-  const { workoutId } = useParams();
+export const revalidate = 60 * 1000; // 1 minute
 
-  const {
-    data: workout,
-    isLoading,
-    error,
-  } = useQuery({
+export default async function WorkoutDetailsPage({
+  params,
+}: {
+  params: { workoutId: string };
+}) {
+  const queryClient = new QueryClient();
+  const { workoutId } = params;
+
+  await queryClient.prefetchQuery({
     queryKey: ["workout", workoutId],
-    queryFn: () => getWorkoutById(workoutId as string),
+    queryFn: () => getWorkoutById(workoutId),
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <ErrorDisplay title="Error" message={(error as Error).message} />;
-  }
-  if (!workout) {
-    return <ErrorDisplay title="Not Found" message="Workout not found" />;
-  }
-
-  return <WorkoutBuilder existingWorkout={workout} />;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <WorkoutDetails workoutId={workoutId} />
+    </HydrationBoundary>
+  );
 }

@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -19,9 +20,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar, momentLocalizer, SlotInfo } from "react-big-calendar";
+import {
+  Calendar,
+  EventProps,
+  momentLocalizer,
+  SlotInfo,
+} from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import { ScheduledWorkout, WorkoutType } from "@/types/workouts";
+import { ScheduledWorkout, Workout, WorkoutType } from "@/types/workouts";
 import { RiBikeLine, RiRunLine } from "react-icons/ri";
 import { LiaSwimmerSolid } from "react-icons/lia";
 import { getWorkoutColor } from "@/lib/workout-utils";
@@ -32,6 +38,15 @@ import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import Workouts from "@/app/(dashboard)/workouts/workouts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
 
 const DnDCalendar = withDragAndDrop(Calendar);
 
@@ -39,13 +54,21 @@ const localizer = momentLocalizer(moment);
 
 interface WorkoutCalendarProps {
   initialWorkouts: ScheduledWorkout[];
+  startDate: Date;
+  endDate: Date;
+  onStartDateChange: (date: Date) => void;
+  onEndDateChange: (date: Date) => void;
 }
 
 export function WorkoutCalendarComponent({
   initialWorkouts,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
 }: WorkoutCalendarProps) {
   const [workouts, setWorkouts] = useState(initialWorkouts);
-  const [isAddingWorkout, setIsAddingWorkout] = useState(false);
+  const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
   const [newWorkout, setNewWorkout] = useState({
     title: "",
     type: WorkoutType.RUN,
@@ -54,30 +77,50 @@ export function WorkoutCalendarComponent({
     start: new Date(),
     end: new Date(),
   });
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
   const [isEditWorkoutOpen, setIsEditWorkoutOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isSelectingExistingWorkout, setIsSelectingExistingWorkout] =
     useState(false);
 
-  // const handleAddWorkout = (workout: Workout) => {
-  //   const scheduledWorkout: ScheduledWorkout = {
-  //     ...workout,
-  //     id: workouts.length + 1,
-  //     scheduledAt: newWorkout.start,
-  //   };
-  //   setWorkouts([...workouts, scheduledWorkout]);
-  //   setIsAddingWorkout(false);
-  //   setNewWorkout({
-  //     title: "",
-  //     type: WorkoutType.RUN,
-  //     description: "",
-  //     items: [],
-  //     start: new Date(),
-  //     end: new Date(),
-  //   });
-  // };
+  const queryClient = useQueryClient();
+
+  const createScheduledWorkoutMutation = useMutation({
+    mutationFn: async ({
+      workoutId,
+      scheduledAt,
+    }: {
+      workoutId: number;
+      scheduledAt: Date;
+    }) => {
+      const response = await fetch("/api/scheduled-workouts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          workoutId,
+          scheduledAt: scheduledAt.toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create scheduled workout");
+      }
+
+      return response.json();
+    },
+    onSuccess: (newScheduledWorkout) => {
+      queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
+      setWorkouts((prev) => [...prev, newScheduledWorkout]);
+      setIsWorkoutDialogOpen(false);
+      toast.success("Workout scheduled successfully");
+    },
+    onError: (error) => {
+      console.error("Error creating scheduled workout:", error);
+      toast.error("Failed to schedule workout");
+    },
+  });
 
   const DayCell = ({ date }: { date: Date }) => {
     const handleAddWorkout = () => {
@@ -86,7 +129,7 @@ export function WorkoutCalendarComponent({
         start: date,
         end: new Date(date.getTime() + 60 * 60 * 1000), // Set end time to 1 hour after start
       });
-      setIsAddingWorkout(true);
+      setIsWorkoutDialogOpen(true);
     };
 
     return (
@@ -110,7 +153,7 @@ export function WorkoutCalendarComponent({
 
   const handleSelectSlot = (slotInfo: SlotInfo) => {
     setSelectedDate(slotInfo.start);
-    setIsAddingWorkout(true);
+    setIsWorkoutDialogOpen(true);
   };
 
   const handleSelectEvent = useCallback((event: any) => {
@@ -131,30 +174,42 @@ export function WorkoutCalendarComponent({
     const goToBack = () => {
       const newDate = new Date(toolbar.date);
       newDate.setMonth(newDate.getMonth() - 1);
+      updateDateRange(newDate);
       toolbar.onNavigate("prev", newDate);
     };
 
     const goToNext = () => {
       const newDate = new Date(toolbar.date);
       newDate.setMonth(newDate.getMonth() + 1);
+      updateDateRange(newDate);
       toolbar.onNavigate("next", newDate);
     };
 
     const goToCurrent = () => {
       const now = new Date();
+      updateDateRange(now);
       toolbar.onNavigate("current", now);
     };
 
     const handleMonthChange = (value: string) => {
       const newDate = new Date(toolbar.date);
       newDate.setMonth(parseInt(value));
+      updateDateRange(newDate);
       toolbar.onNavigate("date", newDate);
     };
 
     const handleYearChange = (value: string) => {
       const newDate = new Date(toolbar.date);
       newDate.setFullYear(parseInt(value));
+      updateDateRange(newDate);
       toolbar.onNavigate("date", newDate);
+    };
+
+    const updateDateRange = (date: Date) => {
+      const newStartDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      const newEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      onStartDateChange(newStartDate);
+      onEndDateChange(newEndDate);
     };
 
     const monthOptions = moment.months().map((month, index) => (
@@ -239,9 +294,9 @@ export function WorkoutCalendarComponent({
     };
   };
 
-  const EventComponent = ({ event }: { event: any }) => {
+  const EventComponent = ({ event }: { event: ScheduledWorkout }) => {
     const getIcon = () => {
-      switch (event.type) {
+      switch (event.workout.type) {
         case WorkoutType.SWIM:
           return <LiaSwimmerSolid className="inline-block mr-1" />;
         case WorkoutType.BIKE:
@@ -253,64 +308,81 @@ export function WorkoutCalendarComponent({
       }
     };
 
-    const colorClass = getWorkoutColor(event.type as WorkoutType);
+    const colorClass = getWorkoutColor(event.workout.type as WorkoutType);
 
     return (
-      <div className={`p-1 rounded ${colorClass}`}>
-        {getIcon()}
-        <span>{event.title}</span>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className={`p-1 rounded ${colorClass} flex items-center`}>
+              {getIcon()}
+              <span className="text-xs truncate">{event.workout.title}</span>
+              <span className="text-xs ml-auto">
+                {format(event.scheduledAt, "MMM d, yyyy")}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <Card className="p-2 max-w-xs">
+              <h3 className="font-bold">{event.workout.title}</h3>
+              <p className="text-sm">{event.workout.description}</p>
+            </Card>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   };
 
-  const handleSaveScheduledWorkout = async (workoutId: number) => {
+  const handleSaveScheduledWorkout = (workoutId: number) => {
     if (!selectedDate) return;
 
+    createScheduledWorkoutMutation.mutate({
+      workoutId,
+      scheduledAt: selectedDate,
+    });
+  };
+
+  const handleWorkoutBuilderSave = async (newWorkout: Workout | undefined) => {
     try {
-      const response = await fetch("/api/scheduled-workouts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workoutId,
-          scheduledAt: selectedDate.toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save scheduled workout");
+      if (!newWorkout?.id) {
+        throw new Error("Workout ID is required");
       }
-
-      const savedScheduledWorkout = await response.json();
-      // Update the workouts state with the new scheduled workout
-      setWorkouts([...workouts, savedScheduledWorkout]);
-      setIsAddingWorkout(false);
-      toast.success("Workout scheduled successfully");
+      // Then, schedule the newly created workout
+      handleSaveScheduledWorkout(newWorkout.id);
     } catch (error) {
-      console.error("Error saving scheduled workout:", error);
-      toast.error("Failed to schedule workout");
+      console.error("Error creating workout:", error);
+      toast.error("Failed to create and schedule workout");
     }
   };
 
+  // Update the events prop in the DnDCalendar component
+  const calendarEvents = initialWorkouts.map((scheduledWorkout) => ({
+    id: scheduledWorkout.id,
+    title: scheduledWorkout.workout.title,
+    start: new Date(scheduledWorkout.scheduledAt),
+    end: new Date(
+      new Date(scheduledWorkout.scheduledAt).getTime() + 60 * 60 * 1000
+    ), // Assuming 1 hour duration
+    type: scheduledWorkout.workout.type,
+    workout: scheduledWorkout.workout,
+  }));
+
   return (
     <div className="h-screen p-4 bg-background flex">
-      <div
-        className={`flex-grow transition-all duration-300 ${
-          isAddingWorkout ? "mr-96" : ""
-        }`}
-      >
+      <div className="flex-grow">
         <h1 className="text-2xl font-bold mb-4">Workout Calendar</h1>
         <DnDCalendar
           localizer={localizer}
-          events={workouts}
+          events={calendarEvents}
           onEventDrop={handleEventDrop}
           onEventResize={handleEventResize}
           resizable
           style={{ height: "calc(100vh - 100px)" }}
           components={{
             toolbar: CustomToolbar,
-            event: EventComponent,
+            event: ({ event }: EventProps<object>) => (
+              <EventComponent event={event as ScheduledWorkout} />
+            ),
             month: {
               dateHeader: DayCell,
             },
@@ -318,64 +390,78 @@ export function WorkoutCalendarComponent({
           eventPropGetter={eventStyleGetter}
           onSelectSlot={handleSelectSlot}
           selectable
-          date={currentDate}
-          onNavigate={(date) => setCurrentDate(date)}
+          date={startDate}
+          onNavigate={(date) => {
+            const newStartDate = new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              1
+            );
+            const newEndDate = new Date(
+              date.getFullYear(),
+              date.getMonth() + 1,
+              0
+            );
+            onStartDateChange(newStartDate);
+            onEndDateChange(newEndDate);
+          }}
           className="custom-calendar"
           onSelectEvent={handleSelectEvent}
         />
       </div>
-      {isAddingWorkout && (
-        <div className="w-96 h-full fixed right-0 top-0 bg-background border-l border-border p-4 overflow-y-auto">
-          <h2 className="text-xl font-bold mb-4">Add New Workout</h2>
-          <div className="mb-4">
-            <Label htmlFor="workout-date">Date and Time</Label>
-            <Input
-              id="workout-date"
-              type="datetime-local"
-              value={
-                selectedDate ? format(selectedDate, "yyyy-MM-dd'T'HH:mm") : ""
-              }
-              onChange={(e) => setSelectedDate(new Date(e.target.value))}
-              className="mb-2"
-            />
-            <Button
-              onClick={() =>
-                setIsSelectingExistingWorkout(!isSelectingExistingWorkout)
-              }
-              variant="outline"
-              className="w-full"
-            >
-              {isSelectingExistingWorkout
-                ? "Create New Workout"
-                : "Select Existing Workout"}
-            </Button>
-          </div>
-          {isSelectingExistingWorkout ? (
-            <div>
-              {/* Implement existing workout selection UI here */}
-              <p>Existing workout selection UI to be implemented</p>
-            </div>
-          ) : (
-            <WorkoutBuilder
-              existingWorkout={
-                selectedWorkout || {
-                  title: "",
-                  type: WorkoutType.RUN,
-                  description: "",
-                  items: [],
+
+      <Dialog open={isWorkoutDialogOpen} onOpenChange={setIsWorkoutDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedWorkout ? "Edit Workout" : "Add New Workout"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="mb-4">
+              <Label htmlFor="workout-date">Date and Time</Label>
+              <Input
+                id="workout-date"
+                type="datetime-local"
+                value={
+                  selectedDate ? format(selectedDate, "yyyy-MM-dd'T'HH:mm") : ""
                 }
-              }
-            />
-          )}
-          <Button
-            onClick={() => setIsAddingWorkout(false)}
-            variant="outline"
-            className="mt-4"
-          >
-            Cancel
-          </Button>
-        </div>
-      )}
+                onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                className="mb-2"
+              />
+              <Button
+                onClick={() =>
+                  setIsSelectingExistingWorkout(!isSelectingExistingWorkout)
+                }
+                variant="outline"
+                className="w-full"
+              >
+                {isSelectingExistingWorkout
+                  ? "Create New Workout"
+                  : "Select Existing Workout"}
+              </Button>
+            </div>
+            {isSelectingExistingWorkout ? (
+              <div>
+                <Workouts onSelectWorkout={handleSaveScheduledWorkout} />
+              </div>
+            ) : (
+              <WorkoutBuilder
+                existingWorkout={
+                  selectedWorkout || {
+                    title: "",
+                    type: WorkoutType.RUN,
+                    description: "",
+                    items: [],
+                  }
+                }
+                onSave={handleWorkoutBuilderSave}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isEditWorkoutOpen} onOpenChange={setIsEditWorkoutOpen}>
         <DialogContent>
           <DialogHeader>

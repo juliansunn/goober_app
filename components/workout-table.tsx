@@ -53,6 +53,8 @@ import {
 } from "@/components/ui/select";
 import { useDeleteWorkout } from "@/hooks/use-delete-workout";
 import { ConfirmationDialog } from "@/components/confirm-dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { WorkoutBuilder } from "@/components/workout-builder";
 
 type SkillLevel = "Beginner" | "Intermediate" | "Advanced";
 
@@ -93,6 +95,7 @@ export function WorkoutTable({
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [workoutToDelete, setWorkoutToDelete] = useState<Workout | null>(null);
   const deleteWorkoutMutation = useDeleteWorkout();
+  const [isAddWorkoutModalOpen, setIsAddWorkoutModalOpen] = useState(false);
 
   const columns: ColumnDef<Workout>[] = [
     {
@@ -199,7 +202,31 @@ export function WorkoutTable({
 
   return (
     <div className="container mx-auto py-10">
-      <h2 className="text-2xl font-bold mb-4">Workout Library</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Workout Library</h2>
+        <Dialog
+          open={isAddWorkoutModalOpen}
+          onOpenChange={setIsAddWorkoutModalOpen}
+        >
+          <DialogTrigger asChild>
+            <Button>Add Workout</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[900px]">
+            <div className="flex h-[600px]">
+              <div className="w-1/3 border-r pr-4">
+                <WorkoutBuilder
+                  onSave={() => setIsAddWorkoutModalOpen(false)}
+                />
+              </div>
+              <div className="w-2/3 pl-4">
+                {/* You can add a preview or additional information here */}
+                <h3 className="text-lg font-semibold mb-2">Workout Preview</h3>
+                <p>Preview of the workout will be shown here.</p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
       <div className="flex items-center py-4">
         <Input
           placeholder="Search workouts..."
@@ -324,7 +351,7 @@ export function WorkoutTable({
               <SelectValue>{limit}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {[10, 20, 30, 40, 50].map((size) => (
+              {[25, 50, 100, 200].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>

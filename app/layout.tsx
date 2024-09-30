@@ -4,10 +4,10 @@ import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import ReactQueryProvider from "@lib/tanstack-provider";
 
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import Providers from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -43,10 +43,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <ReactQueryProvider>
+            <Providers>
               <Toaster />
               {children}
-            </ReactQueryProvider>
+            </Providers>
           </ThemeProvider>
         </body>
       </html>

@@ -78,10 +78,12 @@ import { EditableField } from "@/components/editable-field";
 
 interface WorkoutBuilderProps {
   existingWorkout?: Workout | null;
+  onSave?: (workout?: Workout | undefined) => void | Promise<void>;
 }
 
 export function WorkoutBuilder({
   existingWorkout = null,
+  onSave,
 }: WorkoutBuilderProps) {
   const { theme } = useTheme();
   const [workout, setWorkout] = useState<Workout>(
@@ -140,7 +142,6 @@ export function WorkoutBuilder({
   const handlePromptSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsAiLoading(true);
-    console.log("aiPrompt", prompt);
 
     try {
       const response = await fetch("/api/generate-workout", {
@@ -156,8 +157,6 @@ export function WorkoutBuilder({
       }
 
       const data = await response.json();
-      console.log("data", data);
-
       // Update the workout state
       setWorkout(data.workout);
 
@@ -178,7 +177,7 @@ export function WorkoutBuilder({
 
   const createWorkoutMutation = useMutation({
     mutationFn: createWorkout,
-    onSuccess: () => {
+    onSuccess: (workout) => {
       toast("Workout created successfully!");
 
       // Reset the form and workout state
@@ -194,6 +193,9 @@ export function WorkoutBuilder({
         type: WorkoutType.RUN,
         items: [],
       });
+      if (onSave) {
+        onSave(workout);
+      }
     },
     onError: (error) => {
       console.error("Error creating workout:", error);
