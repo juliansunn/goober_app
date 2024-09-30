@@ -20,7 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar, momentLocalizer, SlotInfo } from "react-big-calendar";
+import {
+  Calendar,
+  EventProps,
+  momentLocalizer,
+  SlotInfo,
+} from "react-big-calendar";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { ScheduledWorkout, Workout, WorkoutType } from "@/types/workouts";
 import { RiBikeLine, RiRunLine } from "react-icons/ri";
@@ -375,7 +380,9 @@ export function WorkoutCalendarComponent({
           style={{ height: "calc(100vh - 100px)" }}
           components={{
             toolbar: CustomToolbar,
-            event: EventComponent,
+            event: ({ event }: EventProps<object>) => (
+              <EventComponent event={event as ScheduledWorkout} />
+            ),
             month: {
               dateHeader: DayCell,
             },
