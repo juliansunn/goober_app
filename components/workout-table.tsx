@@ -324,7 +324,7 @@ export function WorkoutTable({
               <SelectValue>{limit}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {[10, 20, 30, 40, 50].map((size) => (
+              {[25, 50, 100, 200].map((size) => (
                 <SelectItem key={size} value={size.toString()}>
                   {size}
                 </SelectItem>
