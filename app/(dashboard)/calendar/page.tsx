@@ -1,13 +1,11 @@
-import { WorkoutCalendarComponent } from "@/components/workout-calendar";
-
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import { getWorkoutsList } from "@/functions/workouts";
 import { getScheduledWorkoutsList } from "@/functions/scheduled-workouts";
 import { CalendarComponent } from "./calendar";
+import { getStravaActivities } from "@/functions/strava";
 
 export const revalidate = 60 * 1000; // 1 minute
 
@@ -17,15 +15,27 @@ export default async function CalendarPage() {
   const today = new Date();
   const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
   const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const page = 1;
+  const perPage = 30;
 
   await queryClient.prefetchQuery({
     queryKey: ["scheduled-workouts", { startDate, endDate }],
     queryFn: () => getScheduledWorkoutsList({ startDate, endDate }),
   });
 
+  // Prefetch Strava activities
+  await queryClient.prefetchQuery({
+    queryKey: ["strava-activities", { startDate, endDate, page, perPage }],
+    queryFn: () =>
+      getStravaActivities({
+        after: Math.floor(startDate.getTime() / 1000),
+        before: Math.floor(endDate.getTime() / 1000),
+        page,
+        per_page: perPage,
+      }),
+  });
+
   return (
-    // Neat! Serialization is now as easy as passing props.
-    // HydrationBoundary is a Client Component, so hydration will happen there.
     <HydrationBoundary state={dehydrate(queryClient)}>
       <CalendarComponent />
     </HydrationBoundary>
