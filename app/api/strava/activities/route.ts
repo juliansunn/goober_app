@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import { refreshStravaToken } from "@/lib/strava/refresh-token";
 import { ExtendedSession } from "@/types/strava";
+import { authOptions } from "@/lib/next-auth/utils";
 
 export async function GET(req: Request, res: NextResponse) {
   let session = (await getServerSession(authOptions)) as ExtendedSession;

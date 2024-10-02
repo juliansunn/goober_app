@@ -1,7 +1,7 @@
 import { StravaActivity, ExtendedSession } from "@/types";
 import { getServerSession } from "next-auth";
 import { refreshStravaToken } from "@/lib/strava/refresh-token";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/next-auth/utils";
 
 export async function getStravaActivities({
   after,
