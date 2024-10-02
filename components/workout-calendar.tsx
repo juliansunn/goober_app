@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -47,27 +46,26 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
+import { CalendarItem, StravaActivity } from "@/types";
 
 const DnDCalendar = withDragAndDrop(Calendar);
 
 const localizer = momentLocalizer(moment);
 
 interface WorkoutCalendarProps {
-  initialWorkouts: ScheduledWorkout[];
+  calendarItems: CalendarItem[];
   startDate: Date;
-  endDate: Date;
   onStartDateChange: (date: Date) => void;
   onEndDateChange: (date: Date) => void;
 }
 
 export function WorkoutCalendarComponent({
-  initialWorkouts,
+  calendarItems,
   startDate,
-  endDate,
   onStartDateChange,
   onEndDateChange,
 }: WorkoutCalendarProps) {
-  const [workouts, setWorkouts] = useState(initialWorkouts);
+  const [workouts, setWorkouts] = useState(calendarItems);
   const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
   const [newWorkout, setNewWorkout] = useState({
     title: "",
@@ -124,11 +122,7 @@ export function WorkoutCalendarComponent({
 
   const DayCell = ({ date }: { date: Date }) => {
     const handleAddWorkout = () => {
-      setNewWorkout({
-        ...newWorkout,
-        start: date,
-        end: new Date(date.getTime() + 60 * 60 * 1000), // Set end time to 1 hour after start
-      });
+      setNewWorkout(newWorkout);
       setIsWorkoutDialogOpen(true);
     };
 
@@ -162,8 +156,10 @@ export function WorkoutCalendarComponent({
   }, []);
 
   const handleEditWorkout = () => {
-    const updatedWorkouts = workouts.map((workout) =>
-      workout.id === selectedWorkout.id ? selectedWorkout : workout
+    const updatedWorkouts = workouts.map((calendarItem) =>
+      calendarItem.item.id === selectedWorkout.id
+        ? { ...calendarItem, item: selectedWorkout }
+        : calendarItem
     );
     setWorkouts(updatedWorkouts);
     setIsEditWorkoutOpen(false);
@@ -266,11 +262,11 @@ export function WorkoutCalendarComponent({
   };
 
   const handleEventDrop = ({ event, start, end }: any) => {
-    const updatedWorkouts = workouts.map((workout) => {
-      if (workout.id === event.id) {
-        return { ...workout, start, end };
+    const updatedWorkouts = workouts.map((calendarItem) => {
+      if (calendarItem.item.id === event.id) {
+        return { ...calendarItem, item: { ...calendarItem.item, start, end } };
       }
-      return workout;
+      return calendarItem;
     });
 
     setWorkouts(updatedWorkouts);
@@ -283,8 +279,8 @@ export function WorkoutCalendarComponent({
   const eventStyleGetter = (event: any) => {
     return {
       style: {
-        backgroundColor: "#3174ad",
-        borderRadius: "5px",
+        // backgroundColor: "#3174ad",
+        // borderRadius: "5px",
         opacity: 0.8,
         color: "white",
         border: "0px",
@@ -294,21 +290,38 @@ export function WorkoutCalendarComponent({
     };
   };
 
-  const EventComponent = ({ event }: { event: ScheduledWorkout }) => {
+  const EventComponent = ({ event }: { event: any }) => {
+    const isStravaActivity = event.itemType === "stravaActivity";
+
     const getIcon = () => {
-      switch (event.workout.type) {
-        case WorkoutType.SWIM:
-          return <LiaSwimmerSolid className="inline-block mr-1" />;
-        case WorkoutType.BIKE:
-          return <RiBikeLine className="inline-block mr-1" />;
-        case WorkoutType.RUN:
-          return <RiRunLine className="inline-block mr-1" />;
-        default:
-          return null;
+      if (isStravaActivity) {
+        switch (event.sport_type) {
+          case "Run":
+            return <RiRunLine className="inline-block mr-1" />;
+          case "Ride":
+            return <RiBikeLine className="inline-block mr-1" />;
+          case "Swim":
+            return <LiaSwimmerSolid className="inline-block mr-1" />;
+          default:
+            return null;
+        }
+      } else {
+        switch (event.workout.type) {
+          case WorkoutType.SWIM:
+            return <LiaSwimmerSolid className="inline-block mr-1" />;
+          case WorkoutType.BIKE:
+            return <RiBikeLine className="inline-block mr-1" />;
+          case WorkoutType.RUN:
+            return <RiRunLine className="inline-block mr-1" />;
+          default:
+            return null;
+        }
       }
     };
 
-    const colorClass = getWorkoutColor(event.workout.type as WorkoutType);
+    const colorClass = isStravaActivity
+      ? "bg-orange-500 text-white"
+      : getWorkoutColor(event.workout.type as WorkoutType);
 
     return (
       <TooltipProvider>
@@ -316,16 +329,24 @@ export function WorkoutCalendarComponent({
           <TooltipTrigger asChild>
             <div className={`p-1 rounded ${colorClass} flex items-center`}>
               {getIcon()}
-              <span className="text-xs truncate">{event.workout.title}</span>
+              <span className="text-xs truncate">
+                {isStravaActivity ? event.name : event.workout?.title}
+              </span>
               <span className="text-xs ml-auto">
-                {format(event.scheduledAt, "MMM d, yyyy")}
+                {format(new Date(event.start), "MMM d, yyyy")}
               </span>
             </div>
           </TooltipTrigger>
           <TooltipContent>
             <Card className="p-2 max-w-xs">
-              <h3 className="font-bold">{event.workout.title}</h3>
-              <p className="text-sm">{event.workout.description}</p>
+              <h3 className="font-bold">
+                {isStravaActivity ? event.name : event.workout?.title}
+              </h3>
+              <p className="text-sm">
+                {isStravaActivity
+                  ? `Distance: ${event.distance}m, Duration: ${event.moving_time}s`
+                  : event.workout.description}
+              </p>
             </Card>
           </TooltipContent>
         </Tooltip>
@@ -355,17 +376,36 @@ export function WorkoutCalendarComponent({
     }
   };
 
-  // Update the events prop in the DnDCalendar component
-  const calendarEvents = initialWorkouts.map((scheduledWorkout) => ({
-    id: scheduledWorkout.id,
-    title: scheduledWorkout.workout.title,
-    start: new Date(scheduledWorkout.scheduledAt),
-    end: new Date(
-      new Date(scheduledWorkout.scheduledAt).getTime() + 60 * 60 * 1000
-    ), // Assuming 1 hour duration
-    type: scheduledWorkout.workout.type,
-    workout: scheduledWorkout.workout,
-  }));
+  // Update the calendarEvents to use the new CalendarItem type
+  const calendarEvents = calendarItems.map((item) => {
+    if (item.itemType === "scheduledWorkout") {
+      const scheduledWorkout = item.item as ScheduledWorkout;
+      return {
+        id: scheduledWorkout.id,
+        title: scheduledWorkout.workout?.title,
+        start: new Date(scheduledWorkout.scheduledAt),
+        end: new Date(
+          new Date(scheduledWorkout.scheduledAt).getTime() + 60 * 60 * 1000
+        ),
+        type: scheduledWorkout.workout.type,
+        workout: scheduledWorkout.workout,
+        itemType: "scheduledWorkout",
+      };
+    } else {
+      const stravaActivity = item.item as StravaActivity;
+      return {
+        title: stravaActivity.name,
+        start: new Date(stravaActivity.start_date),
+        end: new Date(
+          new Date(stravaActivity.start_date).getTime() +
+            stravaActivity.elapsed_time * 1000
+        ),
+        ...stravaActivity,
+        type: "strava",
+        itemType: "stravaActivity",
+      };
+    }
+  });
 
   return (
     <div className="h-screen p-4 bg-background flex">
@@ -381,7 +421,7 @@ export function WorkoutCalendarComponent({
           components={{
             toolbar: CustomToolbar,
             event: ({ event }: EventProps<object>) => (
-              <EventComponent event={event as ScheduledWorkout} />
+              <EventComponent event={event} />
             ),
             month: {
               dateHeader: DayCell,
@@ -514,7 +554,7 @@ export function WorkoutCalendarComponent({
               <Label htmlFor="edit-title">Title</Label>
               <Input
                 id="edit-title"
-                value={selectedWorkout ? selectedWorkout.title : ""}
+                value={selectedWorkout ? selectedWorkout?.title : ""}
                 onChange={(e) =>
                   setSelectedWorkout({
                     ...selectedWorkout,
