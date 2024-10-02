@@ -40,3 +40,8 @@ export async function getStravaAccessToken(): Promise<string | null> {
   }
   return session.accessToken;
 }
+
+export async function isStravaAuthenticated(): Promise<boolean> {
+  const session = (await getServerSession(authOptions)) as ExtendedSession;
+  return !!session;
+}

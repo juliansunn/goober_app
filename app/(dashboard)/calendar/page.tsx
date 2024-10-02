@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { getScheduledWorkoutsList } from "@/functions/scheduled-workouts";
 import { CalendarComponent } from "./calendar";
-import { getStravaActivities } from "@/functions/strava";
+import { getStravaActivities, isStravaAuthenticated } from "@/functions/strava";
 
 export const revalidate = 60 * 1000; // 1 minute
 
@@ -23,17 +23,22 @@ export default async function CalendarPage() {
     queryFn: () => getScheduledWorkoutsList({ startDate, endDate }),
   });
 
-  // Prefetch Strava activities
-  await queryClient.prefetchQuery({
-    queryKey: ["strava-activities", { startDate, endDate, page, perPage }],
-    queryFn: () =>
-      getStravaActivities({
-        after: Math.floor(startDate.getTime() / 1000),
-        before: Math.floor(endDate.getTime() / 1000),
-        page,
-        per_page: perPage,
-      }),
-  });
+  // Check if user is authenticated with Strava before prefetching
+  const isAuthenticated = await isStravaAuthenticated();
+
+  if (isAuthenticated) {
+    // Prefetch Strava activities only if authenticated
+    await queryClient.prefetchQuery({
+      queryKey: ["strava-activities", { startDate, endDate, page, perPage }],
+      queryFn: () =>
+        getStravaActivities({
+          after: Math.floor(startDate.getTime() / 1000),
+          before: Math.floor(endDate.getTime() / 1000),
+          page,
+          per_page: perPage,
+        }),
+    });
+  }
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
