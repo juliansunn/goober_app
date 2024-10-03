@@ -4,6 +4,9 @@
 
 AI-Powered Training Plan Manager is a Next.js application that allows users to create, update, and modify training plans and workouts. The app leverages AI to generate tailored workouts and training plans based on user-specific criteria. For users who authorize connection to their Strava account, the app incorporates their Strava data to create even more personalized training plans.
 
+### Link
+https://goober-app.vercel.app
+
 ## Features
 
 - Create, update, and modify training plans and workouts
