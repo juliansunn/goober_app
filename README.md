@@ -40,7 +40,7 @@ https://goober-app.vercel.app
 1. Clone the repository:
 
    ```
-   git clone https://github.com/juliansunn/goober-app.git
+   git clone https://github.com/grubers-goobers/goober_app.git
    cd goober-app
    ```
 
