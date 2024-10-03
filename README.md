@@ -58,6 +58,9 @@ AI-Powered Training Plan Manager is a Next.js application that allows users to c
    OPENAI_API_KEY=your_openai_api_key
    STRAVA_CLIENT_ID=your_strava_client_id
    STRAVA_CLIENT_SECRET=your_strava_client_secret
+   NEXTAUTH_SECRET=any_generated_string_of_your_choice
+   NEXTAUTH_URL=http://localhost:3000
+
    ```
 
 4. After updating the `.env` file, set `ENV_CONFIGURED=true` at the end of the file.
@@ -195,3 +198,27 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduc
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+## Environment Variables
+
+This project uses environment variables for configuration. We provide a `.env.sample` file in the repository as a template. Here's how to use it:
+
+1. The `.env.sample` file is included in the repository and is not gitignored. It serves as a template for the required environment variables.
+
+2. When setting up the project, copy `.env.sample` to a new file named `.env`:
+
+   ```
+   cp .env.sample .env
+   ```
+
+3. Edit the `.env` file and fill in your actual values for each environment variable.
+
+4. The `.env` file should be gitignored (it is by default in this project). Never commit your actual `.env` file to the repository, as it may contain sensitive information.
+
+5. If you add new environment variables to your project, make sure to:
+   - Add them to the `.env.sample` file with a placeholder value
+   - Update the README with any necessary instructions for obtaining or setting the new variable
+
+### Important Note on Security
+
+The `.env.sample` file should never contain real credentials or sensitive information. Use placeholder values or instructions in this file. Real credentials should only be placed in the `.env` file, which is not committed to the repository.
