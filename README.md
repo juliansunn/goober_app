@@ -1,36 +1,197 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# AI-Powered Training Plan Manager
+
+## Overview
+
+AI-Powered Training Plan Manager is a Next.js application that allows users to create, update, and modify training plans and workouts. The app leverages AI to generate tailored workouts and training plans based on user-specific criteria. For users who authorize connection to their Strava account, the app incorporates their Strava data to create even more personalized training plans.
+
+## Features
+
+- Create, update, and modify training plans and workouts
+- AI-generated customized workouts and training plans
+- Strava integration for enhanced personalization
+- User authentication and authorization
+- Responsive design with Tailwind CSS
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Prisma (ORM)
+- PostgreSQL
+- Docker
+- Clerk (Authentication)
+- React Query
+- Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js (v14 or later)
+- Docker
+- Git
+- Make
+
+### Environment Setup
+
+1. Clone the repository:
+
+   ```
+   git clone https://github.com/juliansunn/goober-app.git
+   cd goober-app
+   ```
+
+2. Run the setup command:
+
+   ```
+   make setup
+   ```
+
+   This will create a `.env` file from `.env.sample` if it doesn't exist. The command will then prompt you to update the `.env` file with your actual configuration.
+
+3. Open the `.env` file and update the variables with your actual credentials:
+
+   ```
+   DATABASE_URL="postgresql://username:password@localhost:5432/goober_db"
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   CLERK_SECRET_KEY=your_clerk_secret_key
+   OPENAI_API_KEY=your_openai_api_key
+   STRAVA_CLIENT_ID=your_strava_client_id
+   STRAVA_CLIENT_SECRET=your_strava_client_secret
+   ```
+
+4. After updating the `.env` file, set `ENV_CONFIGURED=true` at the end of the file.
+
+5. Run the setup command again to complete the setup process:
+
+   ```
+   make setup
+   ```
+
+### Database Setup
+
+1. Start the PostgreSQL instance using Docker Compose:
+
+   ```
+   docker-compose up -d
+   ```
+
+2. Run Prisma migrations:
+   ```
+   npx prisma migrate dev
+   ```
+
+### Running the Application
+
+1. Install dependencies:
+
+   ```
+   npm install
+   ```
+
+2. Start the development server:
+
+   ```
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Makefile Commands
+
+We've included a Makefile to simplify common tasks. Here are the available commands:
+
+- `make setup`: Sets up the entire environment (installs dependencies, starts Docker, runs migrations)
+- `make start`: Starts the development server
+- `make db-start`: Starts the PostgreSQL Docker container
+- `make db-stop`: Stops the PostgreSQL Docker container
+- `make migrate`: Runs Prisma migrations
+- `make prisma-studio`: Starts Prisma Studio for database management
+
+To use these commands, simply run `make <command>` in your terminal.
+
+## AI-Powered Workout Generation
+
+This application leverages the OpenAI API to generate structured workout plans tailored to each user's needs. Here's how it works:
+
+### Structured Output
+
+We use OpenAI's function calling feature to ensure that the AI generates workouts in a consistent, structured format. This approach allows us to:
+
+1. Define a specific schema for workout plans
+2. Ensure all generated workouts adhere to this schema
+3. Easily parse and store the generated workouts in our database
+
+### Workout Generation Process
+
+1. **User Input**: The user provides their fitness goals, experience level, available equipment, and any other relevant information.
+
+2. **API Request**: We send a request to the OpenAI API, including:
+
+   - The user's input
+   - A predefined function schema that outlines the structure of a workout plan
+   - Any additional context, such as the user's Strava data (if authorized)
+
+3. **AI Generation**: The AI model generates a workout plan that fits the provided schema.
+
+4. **Parsing and Storage**: The application parses the structured output and if the user would like to save it, the workout is stored in the database.
+
+5. **Presentation**: The generated workout is presented to the user in a user-friendly format.
+
+### Example Schema
+
+Here's a simplified example of the schema we use for workout generation, based on our Prisma database schema:
+
+```typescript
+interface Workout {
+  title: string;
+  description: string;
+  type: "RUN" | "BIKE" | "SWIM";
+  items: WorkoutItem[];
+}
+
+interface WorkoutItem {
+  order: number;
+  interval?: Interval;
+  repeatGroup?: RepeatGroup;
+}
+
+interface Interval {
+  type: "WARMUP" | "COOLDOWN" | "ACTIVE" | "REST";
+  durationType: "TIME" | "DISTANCE" | "HEART_RATE" | "CALORIES";
+  durationValue: number;
+  durationUnit: string;
+  intensityType:
+    | "NONE"
+    | "CADENCE"
+    | "HEART_RATE"
+    | "POWER"
+    | "PACE_MILE"
+    | "PACE_KM"
+    | "PACE_400M";
+  intensityMin?: string;
+  intensityMax?: string;
+}
+
+interface RepeatGroup {
+  repeats: number;
+  intervals: Interval[];
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This schema allows for complex workout structures, including:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Different types of workouts (Run, Bike, Swim). This will expand as the workout schema matures to include more sports and workout paradigms.
+- Various interval types (Warmup, Cooldown, Active, Rest)
+- Flexible duration and intensity settings
+- Repeat groups for interval sets
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+By using this structured approach, we ensure that the AI-generated workouts are consistent, easily manageable within our application, and can be readily adapted to users' needs.
 
-## Learn More
+## Contributing
 
-To learn more about Next.js, take a look at the following resources:
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
