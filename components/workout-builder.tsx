@@ -55,11 +55,12 @@ import IntervalItem from "./interval-item";
 import { getIntervalColor } from "@/lib/workout-utils";
 import IntervalForm from "./forms/interval-form";
 import { useTheme } from "next-themes";
-import { createWorkout } from "@/functions/workouts";
+import { createWorkout, updateWorkout } from "@/functions/workouts";
 
 import {
   createWorkoutSchema,
   CreateWorkoutInput,
+  UpdateWorkoutInput,
 } from "@/schemas/workout-schema";
 import {
   DurationType,
@@ -114,6 +115,7 @@ export function WorkoutBuilder({
   const [editingItem, setEditingItem] = useState<WorkoutItem | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(!!existingWorkout);
 
   const defaultEmptyWorkout = {
     title: "",
@@ -177,38 +179,49 @@ export function WorkoutBuilder({
 
   const createWorkoutMutation = useMutation({
     mutationFn: createWorkout,
-    onSuccess: (workout) => {
-      toast("Workout created successfully!");
-
-      // Reset the form and workout state
-      form.reset({
-        title: "",
-        description: "",
-        type: WorkoutType.RUN,
-        items: [],
-      });
-      setWorkout({
-        title: "",
-        description: "",
-        type: WorkoutType.RUN,
-        items: [],
-      });
-      if (onSave) {
-        onSave(workout);
-      }
-    },
-    onError: (error) => {
-      console.error("Error creating workout:", error);
-      toast("Failed to create workout");
-    },
+    onSuccess: handleWorkoutSuccess,
+    onError: handleWorkoutError,
   });
 
-  const handleCreateWorkout = async (e: React.FormEvent) => {
+  const updateWorkoutMutation = useMutation({
+    mutationFn: (data: UpdateWorkoutInput) =>
+      updateWorkout(existingWorkout!.id!.toString(), data),
+    onSuccess: handleWorkoutSuccess,
+    onError: handleWorkoutError,
+  });
+
+  function handleWorkoutSuccess(workout: Workout) {
+    toast(
+      isEditing
+        ? "Workout updated successfully!"
+        : "Workout created successfully!"
+    );
+    if (onSave) {
+      onSave(workout);
+    }
+    resetForm();
+  }
+
+  function handleWorkoutError(error: Error) {
+    console.error(
+      isEditing ? "Error updating workout:" : "Error creating workout:",
+      error
+    );
+    toast(isEditing ? "Failed to update workout" : "Failed to create workout");
+  }
+
+  function resetForm() {
+    form.reset(defaultEmptyWorkout);
+    setWorkout(defaultEmptyWorkout);
+    setIsEditing(false);
+  }
+
+  const handleSubmitWorkout = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitDialogOpen(false);
 
     const data = form.getValues();
-    const workoutData: CreateWorkoutInput = {
+    const workoutData: CreateWorkoutInput | UpdateWorkoutInput = {
       title: data.title,
       description: data.description,
       type: data.type,
@@ -232,7 +245,11 @@ export function WorkoutBuilder({
         })),
     };
 
-    createWorkoutMutation.mutate(workoutData);
+    if (isEditing && existingWorkout?.id) {
+      updateWorkoutMutation.mutate(workoutData as UpdateWorkoutInput);
+    } else {
+      createWorkoutMutation.mutate(workoutData as CreateWorkoutInput);
+    }
   };
 
   const addItem = () => {
@@ -392,14 +409,14 @@ export function WorkoutBuilder({
         </TooltipProvider>
       </div>
 
-      {createWorkoutMutation.isPending ? (
+      {createWorkoutMutation.isPending || updateWorkoutMutation.isPending ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-12 w-12 animate-spin" />
         </div>
       ) : (
         <div className="grid gap-4 mb-4">
           <Form {...form}>
-            <form onSubmit={handleCreateWorkout} className="space-y-4">
+            <form onSubmit={handleSubmitWorkout} className="space-y-4">
               <FormField
                 control={form.control}
                 name="title"
@@ -499,7 +516,10 @@ export function WorkoutBuilder({
           <DialogTrigger asChild>
             <Button
               type="button" // Prevent form submission
-              disabled={createWorkoutMutation.isPending}
+              disabled={
+                createWorkoutMutation.isPending ||
+                updateWorkoutMutation.isPending
+              }
               onClick={() => {
                 setEditingItem(null);
                 setIsIntervalDialogOpen(true);
@@ -520,10 +540,11 @@ export function WorkoutBuilder({
                 });
               }}
             >
-              {createWorkoutMutation.isPending ? (
+              {createWorkoutMutation.isPending ||
+              updateWorkoutMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  {isEditing ? "Updating..." : "Creating..."}
                 </>
               ) : (
                 "Add Interval"
@@ -702,17 +723,22 @@ export function WorkoutBuilder({
           </DialogContent>
         </Dialog>
 
-        {/* Create Workout Button */}
+        {/* Create/Update Workout Button */}
         <Button
-          type="button" // Prevent form submission
+          type="button"
           onClick={() => setIsSubmitDialogOpen(true)}
-          disabled={createWorkoutMutation.isPending}
+          disabled={
+            createWorkoutMutation.isPending || updateWorkoutMutation.isPending
+          }
         >
-          {createWorkoutMutation.isPending ? (
+          {createWorkoutMutation.isPending ||
+          updateWorkoutMutation.isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating...
+              {isEditing ? "Updating..." : "Creating..."}
             </>
+          ) : isEditing ? (
+            "Update Workout"
           ) : (
             "Create Workout"
           )}
@@ -722,32 +748,44 @@ export function WorkoutBuilder({
         <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Workout</DialogTitle>
+              <DialogTitle>
+                {isEditing ? "Update Workout" : "Create Workout"}
+              </DialogTitle>
               <DialogDescription>
-                Are you sure you want to create this workout?
+                Are you sure you want to {isEditing ? "update" : "create"} this
+                workout?
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end space-x-2">
               <Button
-                type="button" // Prevent form submission
+                type="button"
                 variant="outline"
                 onClick={() => setIsSubmitDialogOpen(false)}
-                disabled={createWorkoutMutation.isPending}
+                disabled={
+                  createWorkoutMutation.isPending ||
+                  updateWorkoutMutation.isPending
+                }
               >
                 Cancel
               </Button>
               <Button
-                type="submit" // Submit the form
-                onClick={handleCreateWorkout}
-                disabled={createWorkoutMutation.isPending}
+                type="submit"
+                onClick={handleSubmitWorkout}
+                disabled={
+                  createWorkoutMutation.isPending ||
+                  updateWorkoutMutation.isPending
+                }
               >
-                {createWorkoutMutation.isPending ? (
+                {createWorkoutMutation.isPending ||
+                updateWorkoutMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {isEditing ? "Updating..." : "Creating..."}
                   </>
+                ) : isEditing ? (
+                  "Confirm Update"
                 ) : (
-                  "Confirm"
+                  "Confirm Create"
                 )}
               </Button>
             </div>
