@@ -1,7 +1,7 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getOrCreateUser } from "../workouts/route";
 import prisma from "@/lib/prisma";
+import { getOrCreateUser } from "@/app/actions/user";
 
 export interface CreateScheduledWorkoutInput {
   workoutId: number;

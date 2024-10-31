@@ -12,13 +12,11 @@ export default async function WorkoutsPage() {
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["workouts", { page: 1, limit: 10, type: null }],
-    queryFn: () => getWorkoutsList({ page: 1, limit: 10, type: null }),
+    queryKey: ["workouts", { page: 1, limit: 100, type: null }],
+    queryFn: () => getWorkoutsList({ page: 1, limit: 100, type: null }),
   });
 
   return (
-    // Neat! Serialization is now as easy as passing props.
-    // HydrationBoundary is a Client Component, so hydration will happen there.
     <HydrationBoundary state={dehydrate(queryClient)}>
       <Workouts />
     </HydrationBoundary>

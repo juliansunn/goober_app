@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import { getOrCreateUser } from "@/app/api/workouts/route";
 import { getStravaAccessToken } from "@/functions/strava";
+import { getOrCreateUser } from "@/app/actions/user";
 
 export async function GET() {
   try {

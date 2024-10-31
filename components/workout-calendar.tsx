@@ -1,14 +1,22 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useState, useCallback } from "react";
+import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { WorkoutBuilder } from "@/components/workout-builder";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  GeneratedScheduledWorkout,
+  ScheduledWorkout,
+  Workout,
+} from "@/types/workouts";
+import { useWorkout } from "@/app/contexts/WorkoutContext";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -16,70 +24,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import {
-  Calendar,
-  EventProps,
-  momentLocalizer,
-  SlotInfo,
-} from "react-big-calendar";
-import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-import { ScheduledWorkout, Workout, WorkoutType } from "@/types/workouts";
-import { RiBikeLine, RiRunLine } from "react-icons/ri";
-import { LiaSwimmerSolid } from "react-icons/lia";
-import { getWorkoutColor } from "@/lib/workout-utils";
-import { WorkoutBuilder } from "@/components/workout-builder";
-import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Plus } from "lucide-react";
-import { toast } from "sonner";
-import Workouts from "@/app/(dashboard)/workouts/workouts";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Card } from "@/components/ui/card";
 import { CalendarItem, StravaActivity } from "@/types";
-
-const DnDCalendar = withDragAndDrop(Calendar);
 
 const localizer = momentLocalizer(moment);
 
 interface WorkoutCalendarProps {
-  calendarItems: CalendarItem[];
   startDate: Date;
   onStartDateChange: (date: Date) => void;
   onEndDateChange: (date: Date) => void;
 }
 
 export function WorkoutCalendarComponent({
-  calendarItems,
   startDate,
   onStartDateChange,
   onEndDateChange,
 }: WorkoutCalendarProps) {
-  const [workouts, setWorkouts] = useState(calendarItems);
-  const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
-  const [newWorkout, setNewWorkout] = useState({
-    title: "",
-    type: WorkoutType.RUN,
-    description: "",
-    items: [],
-    start: new Date(),
-    end: new Date(),
-  });
-  const [selectedWorkout, setSelectedWorkout] = useState<any | null>(null);
-  const [isEditWorkoutOpen, setIsEditWorkoutOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isSelectingExistingWorkout, setIsSelectingExistingWorkout] =
-    useState(false);
+  const [selectedWorkout, setSelectedWorkout] =
+    useState<ScheduledWorkout | null>(null);
+  const [isEditingSidebar, setIsEditingSidebar] = useState(false);
+  const [currentDate, setCurrentDate] = useState(startDate);
+
+  const {
+    calendarItems,
+    bulkCreateScheduledWorkouts,
+    clearGeneratedScheduledWorkouts,
+  } = useWorkout();
 
   const queryClient = useQueryClient();
 
@@ -108,10 +80,8 @@ export function WorkoutCalendarComponent({
 
       return response.json();
     },
-    onSuccess: (newScheduledWorkout) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
-      setWorkouts((prev) => [...prev, newScheduledWorkout]);
-      setIsWorkoutDialogOpen(false);
       toast.success("Workout scheduled successfully");
     },
     onError: (error) => {
@@ -120,92 +90,102 @@ export function WorkoutCalendarComponent({
     },
   });
 
-  const DayCell = ({ date }: { date: Date }) => {
-    const handleAddWorkout = () => {
-      setNewWorkout(newWorkout);
-      setIsWorkoutDialogOpen(true);
-    };
+  const updateScheduledWorkoutMutation = useMutation({
+    mutationFn: async (updatedWorkout: ScheduledWorkout) => {
+      const response = await fetch(
+        `/api/scheduled-workouts/${updatedWorkout.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedWorkout),
+        }
+      );
 
-    return (
-      <div className="flex justify-between items-center p-1">
-        <span>{date.getDate()}</span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-4 w-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddWorkout();
-          }}
-        >
-          <Plus className="h-3 w-3" />
-        </Button>
-      </div>
-    );
-  };
+      if (!response.ok) {
+        throw new Error("Failed to update scheduled workout");
+      }
 
-  const handleSelectSlot = (slotInfo: SlotInfo) => {
-    setSelectedDate(slotInfo.start);
-    setIsWorkoutDialogOpen(true);
-  };
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
+      toast.success("Workout updated successfully");
+      setIsEditingSidebar(false);
+    },
+    onError: (error) => {
+      console.error("Error updating scheduled workout:", error);
+      toast.error("Failed to update workout");
+    },
+  });
 
-  const handleSelectEvent = useCallback((event: any) => {
-    setSelectedWorkout(event);
-    setIsEditWorkoutOpen(true);
-  }, []);
+  const deleteScheduledWorkoutMutation = useMutation({
+    mutationFn: async (workoutId: number) => {
+      const response = await fetch(`/api/scheduled-workouts/${workoutId}`, {
+        method: "DELETE",
+      });
 
-  const handleEditWorkout = () => {
-    const updatedWorkouts = workouts.map((calendarItem) =>
-      calendarItem.item.id === selectedWorkout.id
-        ? { ...calendarItem, item: selectedWorkout }
-        : calendarItem
-    );
-    setWorkouts(updatedWorkouts);
-    setIsEditWorkoutOpen(false);
-    setSelectedWorkout(null);
-  };
+      if (!response.ok) {
+        throw new Error("Failed to delete scheduled workout");
+      }
 
-  const CustomToolbar = (toolbar: any) => {
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
+      toast.success("Workout deleted successfully");
+      setIsEditingSidebar(false);
+    },
+    onError: (error) => {
+      console.error("Error deleting scheduled workout:", error);
+      toast.error("Failed to delete workout");
+    },
+  });
+
+  const handleSelectEvent = useCallback(
+    (event: (typeof calendarEvents)[number]) => {
+      if ("item" in event && "workout" in event.item) {
+        setSelectedWorkout(event.item as ScheduledWorkout);
+        setIsEditingSidebar(true);
+      }
+    },
+    []
+  );
+
+  const CustomToolbar = ({ date, onNavigate }: any) => {
     const goToBack = () => {
-      const newDate = new Date(toolbar.date);
-      newDate.setMonth(newDate.getMonth() - 1);
+      const newDate = new Date(date);
+      newDate.setMonth(date.getMonth() - 1);
+      onNavigate("prev", newDate);
       updateDateRange(newDate);
-      toolbar.onNavigate("prev", newDate);
     };
 
     const goToNext = () => {
-      const newDate = new Date(toolbar.date);
-      newDate.setMonth(newDate.getMonth() + 1);
+      const newDate = new Date(date);
+      newDate.setMonth(date.getMonth() + 1);
+      onNavigate("next", newDate);
       updateDateRange(newDate);
-      toolbar.onNavigate("next", newDate);
     };
 
     const goToCurrent = () => {
-      const now = new Date();
-      updateDateRange(now);
-      toolbar.onNavigate("current", now);
+      const newDate = new Date();
+      onNavigate("current", newDate);
+      updateDateRange(newDate);
     };
 
     const handleMonthChange = (value: string) => {
-      const newDate = new Date(toolbar.date);
+      const newDate = new Date(date);
       newDate.setMonth(parseInt(value));
+      onNavigate("date", newDate);
       updateDateRange(newDate);
-      toolbar.onNavigate("date", newDate);
     };
 
     const handleYearChange = (value: string) => {
-      const newDate = new Date(toolbar.date);
+      const newDate = new Date(date);
       newDate.setFullYear(parseInt(value));
+      onNavigate("date", newDate);
       updateDateRange(newDate);
-      toolbar.onNavigate("date", newDate);
-    };
-
-    const updateDateRange = (date: Date) => {
-      const newStartDate = new Date(date.getFullYear(), date.getMonth(), 1);
-      const newEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      onStartDateChange(newStartDate);
-      onEndDateChange(newEndDate);
     };
 
     const monthOptions = moment.months().map((month, index) => (
@@ -214,7 +194,7 @@ export function WorkoutCalendarComponent({
       </SelectItem>
     ));
 
-    const currentYear = toolbar.date.getFullYear();
+    const currentYear = date.getFullYear();
     const yearOptions = Array.from(
       { length: 11 },
       (_, i) => currentYear - 5 + i
@@ -226,12 +206,12 @@ export function WorkoutCalendarComponent({
 
     return (
       <div className="flex justify-between items-center mb-4">
-        <div>
-          <Button onClick={goToBack} variant="outline" className="mr-2">
-            Back
+        <div className="flex items-center space-x-2">
+          <Button onClick={goToBack} variant="outline">
+            <ChevronLeft className="w-4 h-4" />
           </Button>
-          <Button onClick={goToNext} variant="outline" className="mr-2">
-            Next
+          <Button onClick={goToNext} variant="outline">
+            <ChevronRight className="w-4 h-4" />
           </Button>
           <Button onClick={goToCurrent} variant="outline">
             Today
@@ -240,7 +220,7 @@ export function WorkoutCalendarComponent({
         <div className="flex items-center space-x-2">
           <Select
             onValueChange={handleMonthChange}
-            defaultValue={toolbar.date.getMonth().toString()}
+            defaultValue={date.getMonth().toString()}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select month" />
@@ -249,7 +229,7 @@ export function WorkoutCalendarComponent({
           </Select>
           <Select
             onValueChange={handleYearChange}
-            defaultValue={toolbar.date.getFullYear().toString()}
+            defaultValue={date.getFullYear().toString()}
           >
             <SelectTrigger className="w-[100px]">
               <SelectValue placeholder="Select year" />
@@ -261,27 +241,13 @@ export function WorkoutCalendarComponent({
     );
   };
 
-  const handleEventDrop = ({ event, start, end }: any) => {
-    const updatedWorkouts = workouts.map((calendarItem) => {
-      if (calendarItem.item.id === event.id) {
-        return { ...calendarItem, item: { ...calendarItem.item, start, end } };
-      }
-      return calendarItem;
-    });
-
-    setWorkouts(updatedWorkouts);
-  };
-
-  const handleEventResize = useCallback((event: any) => {
-    // Handle event resize logic here
-  }, []);
-
   const eventStyleGetter = (event: any) => {
     return {
       style: {
-        // backgroundColor: "#3174ad",
-        // borderRadius: "5px",
-        opacity: 0.8,
+        backgroundColor:
+          event.itemType === "stravaActivity"
+            ? "#F97316"
+            : "hsl(var(--primary))",
         color: "white",
         border: "0px",
         display: "block",
@@ -290,306 +256,132 @@ export function WorkoutCalendarComponent({
     };
   };
 
-  const EventComponent = ({ event }: { event: any }) => {
-    const isStravaActivity = event.itemType === "stravaActivity";
+  const calendarEvents = calendarItems.map((item) => ({
+    id: item.item.id,
+    title:
+      item.itemType === "stravaActivity"
+        ? item.item.name
+        : item.item.workout?.title,
+    start: new Date(
+      "scheduledAt" in item.item
+        ? item.item.scheduledAt
+        : "start_date" in item.item
+        ? item.item.start_date
+        : new Date()
+    ),
+    end: new Date(
+      "scheduledAt" in item.item
+        ? item.item.scheduledAt
+        : "start_date" in item.item
+        ? item.item.start_date
+        : new Date()
+    ),
+    itemType: item.itemType,
+    item: item.item,
+  }));
 
-    const getIcon = () => {
-      if (isStravaActivity) {
-        switch (event.sport_type) {
-          case "Run":
-            return <RiRunLine className="inline-block mr-1" />;
-          case "Ride":
-            return <RiBikeLine className="inline-block mr-1" />;
-          case "Swim":
-            return <LiaSwimmerSolid className="inline-block mr-1" />;
-          default:
-            return null;
-        }
-      } else {
-        switch (event.workout.type) {
-          case WorkoutType.SWIM:
-            return <LiaSwimmerSolid className="inline-block mr-1" />;
-          case WorkoutType.BIKE:
-            return <RiBikeLine className="inline-block mr-1" />;
-          case WorkoutType.RUN:
-            return <RiRunLine className="inline-block mr-1" />;
-          default:
-            return null;
-        }
-      }
-    };
+  const handleSaveWorkout = (updatedWorkout?: Workout) => {
+    if (!updatedWorkout) return;
 
-    const colorClass = isStravaActivity
-      ? "bg-orange-500 text-white"
-      : getWorkoutColor(event.workout.type as WorkoutType);
-
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`p-1 rounded ${colorClass} flex items-center`}>
-              {getIcon()}
-              <span className="text-xs truncate">
-                {isStravaActivity ? event.name : event.workout?.title}
-              </span>
-              <span className="text-xs ml-auto">
-                {format(new Date(event.start), "MMM d, yyyy")}
-              </span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <Card className="p-2 max-w-xs">
-              <h3 className="font-bold">
-                {isStravaActivity ? event.name : event.workout?.title}
-              </h3>
-              <p className="text-sm">
-                {isStravaActivity
-                  ? `Distance: ${event.distance}m, Duration: ${event.moving_time}s`
-                  : event.workout.description}
-              </p>
-            </Card>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
-
-  const handleSaveScheduledWorkout = (workoutId: number) => {
-    if (!selectedDate) return;
-
-    createScheduledWorkoutMutation.mutate({
-      workoutId,
-      scheduledAt: selectedDate,
-    });
-  };
-
-  const handleWorkoutBuilderSave = async (newWorkout: Workout | undefined) => {
-    try {
-      if (!newWorkout?.id) {
-        throw new Error("Workout ID is required");
-      }
-      // Then, schedule the newly created workout
-      handleSaveScheduledWorkout(newWorkout.id);
-    } catch (error) {
-      console.error("Error creating workout:", error);
-      toast.error("Failed to create and schedule workout");
-    }
-  };
-
-  // Update the calendarEvents to use the new CalendarItem type
-  const calendarEvents = calendarItems.map((item) => {
-    if (item.itemType === "scheduledWorkout") {
-      const scheduledWorkout = item.item as ScheduledWorkout;
-      return {
-        id: scheduledWorkout.id,
-        title: scheduledWorkout.workout?.title,
-        start: new Date(scheduledWorkout.scheduledAt),
-        end: new Date(
-          new Date(scheduledWorkout.scheduledAt).getTime() + 60 * 60 * 1000
-        ),
-        type: scheduledWorkout.workout.type,
-        workout: scheduledWorkout.workout,
-        itemType: "scheduledWorkout",
+    if (selectedWorkout) {
+      const updatedScheduledWorkout: ScheduledWorkout = {
+        ...selectedWorkout,
+        workout: updatedWorkout,
       };
+      updateScheduledWorkoutMutation.mutate(updatedScheduledWorkout);
     } else {
-      const stravaActivity = item.item as StravaActivity;
-      return {
-        title: stravaActivity.name,
-        start: new Date(stravaActivity.start_date),
-        end: new Date(
-          new Date(stravaActivity.start_date).getTime() +
-            stravaActivity.elapsed_time * 1000
-        ),
-        ...stravaActivity,
-        type: "strava",
-        itemType: "stravaActivity",
-      };
+      createScheduledWorkoutMutation.mutate({
+        workoutId: updatedWorkout.id!,
+        scheduledAt: selectedWorkout!.scheduledAt,
+      });
     }
-  });
+  };
+
+  const handleDeleteWorkout = () => {
+    if (selectedWorkout && selectedWorkout.id) {
+      deleteScheduledWorkoutMutation.mutate(selectedWorkout.id);
+    }
+  };
+
+  const updateDateRange = (date: Date) => {
+    const newStartDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    const newEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    onStartDateChange(newStartDate);
+    onEndDateChange(newEndDate);
+    setCurrentDate(date);
+  };
 
   return (
     <div className="h-screen p-4 bg-background flex">
-      <div className="flex-grow">
+      <div className="flex-grow pr-4">
         <h1 className="text-2xl font-bold mb-4">Workout Calendar</h1>
-        <DnDCalendar
+        <Calendar
           localizer={localizer}
           events={calendarEvents}
-          onEventDrop={handleEventDrop}
-          onEventResize={handleEventResize}
-          resizable
+          startAccessor="start"
+          endAccessor="end"
           style={{ height: "calc(100vh - 100px)" }}
+          onSelectEvent={handleSelectEvent}
+          selectable
           components={{
             toolbar: CustomToolbar,
-            event: ({ event }: EventProps<object>) => (
-              <EventComponent event={event} />
-            ),
-            month: {
-              dateHeader: DayCell,
-            },
           }}
           eventPropGetter={eventStyleGetter}
-          onSelectSlot={handleSelectSlot}
-          selectable
-          date={startDate}
-          onNavigate={(date) => {
-            const newStartDate = new Date(
-              date.getFullYear(),
-              date.getMonth(),
-              1
-            );
-            const newEndDate = new Date(
-              date.getFullYear(),
-              date.getMonth() + 1,
-              0
-            );
-            onStartDateChange(newStartDate);
-            onEndDateChange(newEndDate);
+          date={currentDate}
+          onNavigate={(newDate) => {
+            updateDateRange(newDate);
           }}
-          className="custom-calendar"
-          onSelectEvent={handleSelectEvent}
         />
       </div>
-
-      <Dialog open={isWorkoutDialogOpen} onOpenChange={setIsWorkoutDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedWorkout ? "Edit Workout" : "Add New Workout"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="mb-4">
-              <Label htmlFor="workout-date">Date and Time</Label>
-              <Input
-                id="workout-date"
-                type="datetime-local"
-                value={
-                  selectedDate ? format(selectedDate, "yyyy-MM-dd'T'HH:mm") : ""
-                }
-                onChange={(e) => setSelectedDate(new Date(e.target.value))}
-                className="mb-2"
-              />
-              <Button
-                onClick={() =>
-                  setIsSelectingExistingWorkout(!isSelectingExistingWorkout)
-                }
-                variant="outline"
-                className="w-full"
-              >
-                {isSelectingExistingWorkout
-                  ? "Create New Workout"
-                  : "Select Existing Workout"}
-              </Button>
-            </div>
-            {isSelectingExistingWorkout ? (
-              <div>
-                <Workouts onSelectWorkout={handleSaveScheduledWorkout} />
+      {isEditingSidebar && (
+        <div className="w-1/3 border-l bg-secondary">
+          <ScrollArea className="h-[calc(100vh-2rem)]">
+            <div className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">
+                  {selectedWorkout?.id ? "Edit Workout" : "Add New Workout"}
+                </h2>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsEditingSidebar(false)}
+                >
+                  <X className="h-6 w-6" />
+                </Button>
               </div>
-            ) : (
+              <div className="mb-4">
+                <Label htmlFor="scheduledAt">Scheduled At</Label>
+                <Input
+                  id="scheduledAt"
+                  type="datetime-local"
+                  value={format(
+                    selectedWorkout!.scheduledAt,
+                    "yyyy-MM-dd'T'HH:mm"
+                  )}
+                  onChange={(e) =>
+                    setSelectedWorkout((prev) => ({
+                      ...prev!,
+                      scheduledAt: new Date(e.target.value),
+                    }))
+                  }
+                />
+              </div>
               <WorkoutBuilder
-                existingWorkout={
-                  selectedWorkout || {
-                    title: "",
-                    type: WorkoutType.RUN,
-                    description: "",
-                    items: [],
-                  }
-                }
-                onSave={handleWorkoutBuilderSave}
+                existingWorkout={selectedWorkout?.workout}
+                onSave={handleSaveWorkout}
               />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isEditWorkoutOpen} onOpenChange={setIsEditWorkoutOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Workout</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="edit-date">Date</Label>
-                <Input
-                  id="edit-date"
-                  type="date"
-                  value={
-                    selectedWorkout
-                      ? moment(selectedWorkout.start).format("YYYY-MM-DD")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const newDate = new Date(e.target.value);
-                    newDate.setHours(
-                      selectedWorkout.start.getHours(),
-                      selectedWorkout.start.getMinutes()
-                    );
-                    setSelectedWorkout({ ...selectedWorkout, start: newDate });
-                  }}
-                />
-              </div>
-              <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="edit-time">Time</Label>
-                <Input
-                  id="edit-time"
-                  type="time"
-                  value={
-                    selectedWorkout
-                      ? moment(selectedWorkout.start).format("HH:mm")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const [hours, minutes] = e.target.value
-                      .split(":")
-                      .map(Number);
-                    const newDate = new Date(selectedWorkout.start);
-                    newDate.setHours(hours, minutes);
-                    setSelectedWorkout({ ...selectedWorkout, start: newDate });
-                  }}
-                />
-              </div>
+              {selectedWorkout?.id && selectedWorkout.id > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteWorkout}
+                  className="mt-4"
+                >
+                  Delete Workout
+                </Button>
+              )}
             </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="edit-title">Title</Label>
-              <Input
-                id="edit-title"
-                value={selectedWorkout ? selectedWorkout?.title : ""}
-                onChange={(e) =>
-                  setSelectedWorkout({
-                    ...selectedWorkout,
-                    title: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="edit-type">Workout Type</Label>
-              <Select
-                onValueChange={(value) =>
-                  setSelectedWorkout({
-                    ...selectedWorkout,
-                    type: value as WorkoutType,
-                  })
-                }
-                value={selectedWorkout ? selectedWorkout.type : ""}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select workout type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(WorkoutType).map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={handleEditWorkout}>Save Changes</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </ScrollArea>
+        </div>
+      )}
     </div>
   );
 }

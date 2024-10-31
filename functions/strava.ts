@@ -14,6 +14,12 @@ export async function getStravaActivities({
   page: number;
   per_page: number;
 }): Promise<StravaActivity[]> {
+  const today = new Date();
+  if (after > today.getTime() / 1000) {
+    console.log("after is after today, skipping request");
+    return [];
+  }
+
   const response = await fetch(
     `/api/strava/activities?after=${after}&before=${before}&page=${page}&per_page=${per_page}`
   );

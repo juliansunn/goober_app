@@ -70,3 +70,7 @@ export interface ScheduledWorkout extends Workout {
   user: User;
   workout: Workout;
 }
+
+export interface GeneratedScheduledWorkout extends ScheduledWorkout {
+  notes: string;
+}
