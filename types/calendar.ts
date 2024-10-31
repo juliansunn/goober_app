@@ -1,7 +1,16 @@
 import { StravaActivity } from "./strava";
-import { ScheduledWorkout } from "./workouts";
+import { GeneratedScheduledWorkout, ScheduledWorkout } from "./workouts";
 
-export type CalendarItem = {
-  itemType: "scheduledWorkout" | "stravaActivity";
-  item: ScheduledWorkout | StravaActivity;
-};
+export type CalendarItem =
+  | {
+      itemType: "scheduledWorkout";
+      item: ScheduledWorkout;
+    }
+  | {
+      itemType: "stravaActivity";
+      item: StravaActivity;
+    }
+  | {
+      itemType: "generatedScheduledWorkout";
+      item: GeneratedScheduledWorkout;
+    };

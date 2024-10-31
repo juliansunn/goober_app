@@ -19,7 +19,11 @@ export default async function CalendarPage() {
   const perPage = 30;
 
   await queryClient.prefetchQuery({
-    queryKey: ["scheduled-workouts", { startDate, endDate }],
+    queryKey: [
+      "scheduledWorkouts",
+      startDate.toISOString(),
+      endDate.toISOString(),
+    ],
     queryFn: () => getScheduledWorkoutsList({ startDate, endDate }),
   });
 
@@ -27,9 +31,14 @@ export default async function CalendarPage() {
   const isAuthenticated = await isStravaAuthenticated();
 
   if (isAuthenticated) {
-    // Prefetch Strava activities only if authenticated
     await queryClient.prefetchQuery({
-      queryKey: ["strava-activities", { startDate, endDate, page, perPage }],
+      queryKey: [
+        "stravaActivities",
+        startDate.toISOString(),
+        endDate.toISOString(),
+        page,
+        perPage,
+      ],
       queryFn: () =>
         getStravaActivities({
           after: Math.floor(startDate.getTime() / 1000),

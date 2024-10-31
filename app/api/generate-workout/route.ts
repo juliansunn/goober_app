@@ -1,66 +1,14 @@
 // pages/api/generateWorkout.ts
 
 import OpenAI from "openai";
+import { NextResponse } from "next/server";
 import z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { zodResponseFormat } from "openai/helpers/zod";
-
-import {
-  IntervalType,
-  WorkoutType,
-  DurationType,
-  IntensityType,
-} from "@/types/workouts";
-import { NextResponse } from "next/server";
+import { workoutSchema } from "@/types/schedule";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Define Zod schemas for enums
-const IntervalTypeSchema = z.enum(
-  Object.values(IntervalType) as [IntervalType, ...IntervalType[]]
-);
-const WorkoutTypeSchema = z.enum(
-  Object.values(WorkoutType) as [WorkoutType, ...WorkoutType[]]
-);
-const DurationTypeSchema = z.enum(
-  Object.values(DurationType) as [DurationType, ...DurationType[]]
-);
-const IntensityTypeSchema = z.enum(
-  Object.values(IntensityType) as [IntensityType, ...IntensityType[]]
-);
-
-const singleIntervalSchema = z.object({
-  type: IntervalTypeSchema,
-  durationType: DurationTypeSchema,
-  durationValue: z.number(),
-  durationUnit: z.string(),
-  intensityType: IntensityTypeSchema,
-  intensityMin: z.string(),
-  intensityMax: z.string(),
-});
-
-const intervalSchema = z.object({
-  id: z.number().int(),
-  order: z.number().int(),
-  interval: singleIntervalSchema,
-});
-
-const repeatGroupSchema = z.object({
-  id: z.number().int(),
-  order: z.number().int(),
-  repeatGroup: z.object({
-    intervals: z.array(singleIntervalSchema),
-    repeats: z.number().int(),
-  }),
-});
-
-const workoutSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  type: WorkoutTypeSchema,
-  items: z.array(z.union([intervalSchema, repeatGroupSchema])),
 });
 
 const workoutJsonSchema = zodToJsonSchema(workoutSchema, "workoutSchema");

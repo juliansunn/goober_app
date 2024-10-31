@@ -11,6 +11,7 @@ import { getServerSession } from "next-auth";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Providers from "./providers";
+import { WorkoutProvider } from "./contexts/WorkoutContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -50,8 +51,10 @@ export default async function RootLayout({
           >
             <SessionProvider session={session}>
               <Providers>
-                <Toaster />
-                {children}
+                <WorkoutProvider>
+                  <Toaster />
+                  {children}
+                </WorkoutProvider>
               </Providers>
             </SessionProvider>
           </ThemeProvider>
