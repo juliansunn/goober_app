@@ -7,6 +7,9 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { RiBikeLine, RiRunLine } from "react-icons/ri";
 import { LiaSwimmerSolid } from "react-icons/lia";
@@ -40,7 +43,6 @@ import {
   useReactTable,
   getSortedRowModel,
   SortingState,
-  getPaginationRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
 import { Workout, WorkoutType } from "@/types/workouts";
@@ -100,19 +102,31 @@ export function WorkoutTable({
   const columns: ColumnDef<Workout>[] = [
     {
       accessorKey: "type",
-      header: "Type",
+      header: ({ column }) => (
+        <div
+          className="text-center cursor-pointer select-none"
+          onClick={() => column.toggleSorting()}
+        >
+          Type
+          {column.getIsSorted() && (
+            <span className="ml-2">
+              {column.getIsSorted() === "asc" ? "↑" : "↓"}
+            </span>
+          )}
+        </div>
+      ),
       cell: ({ row }) => {
         const workoutType = row.getValue("type") as string;
         return (
           <div className="flex items-center justify-center">
             {workoutType === WorkoutType.SWIM && (
-              <LiaSwimmerSolid className="w-4 h-4 mr-2" />
+              <LiaSwimmerSolid className="w-4 h-4" />
             )}
             {workoutType === WorkoutType.BIKE && (
-              <RiBikeLine className="w-4 h-4 mr-2" />
+              <RiBikeLine className="w-4 h-4" />
             )}
             {workoutType === WorkoutType.RUN && (
-              <RiRunLine className="w-4 h-4 mr-2" />
+              <RiRunLine className="w-4 h-4" />
             )}
           </div>
         );
@@ -120,33 +134,85 @@ export function WorkoutTable({
     },
     {
       accessorKey: "title",
-      header: "Title",
+      header: ({ column }) => (
+        <div
+          className="text-left cursor-pointer select-none"
+          onClick={() => column.toggleSorting()}
+        >
+          Title
+          {column.getIsSorted() && (
+            <span className="ml-2">
+              {column.getIsSorted() === "asc" ? "↑" : "↓"}
+            </span>
+          )}
+        </div>
+      ),
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("title")}</div>
+        <div className="font-medium text-left">{row.getValue("title")}</div>
       ),
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: ({ column }) => (
+        <div
+          className="text-left cursor-pointer select-none"
+          onClick={() => column.toggleSorting()}
+        >
+          Description
+          {column.getIsSorted() && (
+            <span className="ml-2">
+              {column.getIsSorted() === "asc" ? "↑" : "↓"}
+            </span>
+          )}
+        </div>
+      ),
       cell: ({ row }) => (
-        <div className="hidden md:block">
+        <div className="hidden md:block text-left">
           {truncateDescription(row.getValue("description"), 100)}
         </div>
       ),
     },
     {
       accessorKey: "skillLevel",
-      header: "Skill Level",
+      header: ({ column }) => (
+        <div
+          className="text-center cursor-pointer select-none"
+          onClick={() => column.toggleSorting()}
+        >
+          Skill Level
+          {column.getIsSorted() && (
+            <span className="ml-2">
+              {column.getIsSorted() === "asc" ? "↑" : "↓"}
+            </span>
+          )}
+        </div>
+      ),
       cell: ({ row }) => {
         const skillLevel = row.getValue("skillLevel") as SkillLevel;
         return (
-          <Badge className={getSkillLevelColor("Advanced")}>SKILL LEVEL</Badge>
+          <div className="text-center">
+            <Badge className={getSkillLevelColor(skillLevel)}>
+              {skillLevel}
+            </Badge>
+          </div>
         );
       },
     },
     {
       accessorKey: "popularity",
-      header: "Popularity",
+      header: ({ column }) => (
+        <div
+          className="text-right cursor-pointer select-none"
+          onClick={() => column.toggleSorting()}
+        >
+          Popularity
+          {column.getIsSorted() && (
+            <span className="ml-2">
+              {column.getIsSorted() === "asc" ? "↑" : "↓"}
+            </span>
+          )}
+        </div>
+      ),
       cell: ({ row }) => {
         const popularity = row.getValue("popularity") as number;
         return (
@@ -190,7 +256,6 @@ export function WorkoutTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -200,10 +265,24 @@ export function WorkoutTable({
     },
   });
 
+  const columnWidths = {
+    type: "w-[60px]",
+    title: "w-[200px]",
+    description: "w-[400px]",
+    skillLevel: "w-[120px]",
+    popularity: "w-[100px]",
+    actions: "w-[60px]",
+  };
+
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Workout Library</h2>
+    <div className="container h-[calc(91vh)] flex flex-col gap-4 py-4">
+      <div className="flex items-center justify-between">
+        <Input
+          placeholder="Search workouts..."
+          value={globalFilter ?? ""}
+          onChange={(event) => setGlobalFilter(event.target.value)}
+          className="max-w-sm"
+        />
         <Dialog
           open={isAddWorkoutModalOpen}
           onOpenChange={setIsAddWorkoutModalOpen}
@@ -219,7 +298,6 @@ export function WorkoutTable({
                 />
               </div>
               <div className="w-2/3 pl-4">
-                {/* You can add a preview or additional information here */}
                 <h3 className="text-lg font-semibold mb-2">Workout Preview</h3>
                 <p>Preview of the workout will be shown here.</p>
               </div>
@@ -227,120 +305,123 @@ export function WorkoutTable({
           </DialogContent>
         </Dialog>
       </div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Search workouts..."
-          value={globalFilter ?? ""}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
+
+      <div className="relative flex-grow border rounded-md">
+        <div className="absolute inset-0 flex flex-col">
+          <div className="relative">
+            <Table>
+              <TableHeader className="sticky top-0 bg-secondary">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="border-b">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className={`bg-background h-12 ${
+                          columnWidths[header.id as keyof typeof columnWidths]
+                        }`}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <HoverCard key={row.id}>
-                  <HoverCardTrigger asChild>
-                    <TableRow
-                      className="cursor-pointer"
-                      onClick={() =>
-                        (window.location.href = `/workouts/${row.original.id}`)
-                      }
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold">
-                        {row.original.title}
-                      </h4>
-                      <p className="text-sm">{row.original.description}</p>
-                      <div className="flex items-center pt-2">
-                        <Badge
-                          className={`${getSkillLevelColor("Advanced")} mr-2`}
+              </TableHeader>
+            </Table>
+          </div>
+
+          <div className="flex-grow overflow-auto">
+            <Table>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <HoverCard key={row.id}>
+                      <HoverCardTrigger asChild>
+                        <TableRow
+                          className="cursor-pointer"
+                          onClick={() =>
+                            (window.location.href = `/workouts/${row.original.id}`)
+                          }
                         >
-                          SKILL LEVEL
-                        </Badge>
-                        <span className="flex items-center text-sm text-muted-foreground">
-                          <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                          10% popularity
-                        </span>
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground pt-2">
-                        <Clock className="w-4 h-4 mr-2" />
-                        Duration: 60 minutes
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground pt-2">
-                        {row.original.type === WorkoutType.SWIM && (
-                          <LiaSwimmerSolid className="w-4 h-4 mr-2" />
-                        )}
-                        {row.original.type === WorkoutType.BIKE && (
-                          <RiBikeLine className="w-4 h-4 mr-2" />
-                        )}
-                        {row.original.type === WorkoutType.RUN && (
-                          <RiRunLine className="w-4 h-4 mr-2" />
-                        )}
-                        <span className="capitalize">
-                          Type: {row.original.type}
-                        </span>
-                      </div>
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className={
+                                columnWidths[
+                                  cell.column.id as keyof typeof columnWidths
+                                ]
+                              }
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </HoverCardTrigger>
+                      <HoverCardContent>
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold">
+                            {row.original.title}
+                          </h4>
+                          <p className="text-sm">{row.original.description}</p>
+                          <div className="flex items-center pt-2">
+                            <Badge
+                              className={`${getSkillLevelColor(
+                                "Advanced"
+                              )} mr-2`}
+                            >
+                              SKILL LEVEL
+                            </Badge>
+                            <span className="flex items-center text-sm text-muted-foreground">
+                              <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                              10% popularity
+                            </span>
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground pt-2">
+                            <Clock className="w-4 h-4 mr-2" />
+                            Duration: 60 minutes
+                          </div>
+                          <div className="flex items-center text-sm text-muted-foreground pt-2">
+                            {row.original.type === WorkoutType.SWIM && (
+                              <LiaSwimmerSolid className="w-4 h-4 mr-2" />
+                            )}
+                            {row.original.type === WorkoutType.BIKE && (
+                              <RiBikeLine className="w-4 h-4 mr-2" />
+                            )}
+                            {row.original.type === WorkoutType.RUN && (
+                              <RiRunLine className="w-4 h-4 mr-2" />
+                            )}
+                            <span className="capitalize">
+                              Type: {row.original.type}
+                            </span>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
-      <ConfirmationDialog
-        isOpen={!!workoutToDelete}
-        onClose={() => setWorkoutToDelete(null)}
-        onConfirm={() => {
-          if (workoutToDelete?.id) {
-            deleteWorkoutMutation.mutate(workoutToDelete.id.toString());
-            setWorkoutToDelete(null);
-          }
-        }}
-        title="Delete Workout"
-        description={`Are you sure you want to delete the workout "${workoutToDelete?.title}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
-      <div className="flex items-center justify-between py-4">
+
+      <div className="flex items-center justify-between mt-auto">
         <div className="flex items-center space-x-2">
           <span>Show</span>
           <Select

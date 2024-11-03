@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Reorder } from "framer-motion";
-import { Loader2, Bot } from "lucide-react";
+import { Loader2, Bot, PlusCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -75,7 +75,13 @@ import { toast } from "sonner";
 import { WorkoutType } from "@prisma/client";
 import { useMutation } from "@tanstack/react-query";
 import { MarkdownInput } from "@/components/markdown-input";
-import { EditableField } from "@/components/editable-field";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface WorkoutBuilderProps {
   existingWorkout?: Workout | null;
@@ -367,115 +373,134 @@ export function WorkoutBuilder({
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-xl">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-bold">Workout Builder</h2>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Bot className="h-6 w-6" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <form onSubmit={handlePromptSubmit} className="space-y-4">
-                    <h3 className="font-semibold">AI Workout Assistant</h3>
-                    <Textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Describe the workout you want (e.g., '30-minute HIIT for beginners')"
-                      disabled={isAiLoading}
-                    />
-                    <Button type="submit" disabled={isAiLoading}>
-                      {isAiLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Generating...
-                        </>
-                      ) : (
-                        "Generate Workout"
-                      )}
-                    </Button>
-                  </form>
-                </PopoverContent>
-              </Popover>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Need help creating your workout?</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-
-      {createWorkoutMutation.isPending || updateWorkoutMutation.isPending ? (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-12 w-12 animate-spin" />
-        </div>
-      ) : (
-        <div className="grid gap-4 mb-4">
-          <Form {...form}>
-            <form onSubmit={handleSubmitWorkout} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-lg font-bold">Title</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-lg font-bold">Type</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+    <div className="container mx-auto p-4 max-w-3xl">
+      <h1 className="text-3xl font-bold mb-6">Workout Builder</h1>
+      <form className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Workout Details</CardTitle>
+            <CardDescription>
+              Enter the basic information for your workout
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={handleSubmitWorkout} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select workout type" />
-                        </SelectTrigger>
+                        <Input {...field} className="w-full" />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value={WorkoutType.RUN}>Run</SelectItem>
-                        <SelectItem value={WorkoutType.BIKE}>Bike</SelectItem>
-                        <SelectItem value={WorkoutType.SWIM}>Swim</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <MarkdownInput
-                        isEditable={true}
-                        value={field.value}
-                        onChange={field.onChange}
-                        label="Description"
-                        // placeholder="Describe your workout"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </form>
-          </Form>
-          <div className="grid gap-2">
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select workout type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={WorkoutType.RUN}>Run</SelectItem>
+                          <SelectItem value={WorkoutType.BIKE}>Bike</SelectItem>
+                          <SelectItem value={WorkoutType.SWIM}>Swim</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <MarkdownInput
+                          isEditable={true}
+                          value={field.value}
+                          onChange={field.onChange}
+                          label="Description"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Intervals</CardTitle>
+            <CardDescription>
+              Build your workout by adding intervals
+            </CardDescription>
+            <div className="flex justify-end">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon">
+                          <Bot className="h-6 w-6" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80">
+                        <form
+                          onSubmit={handlePromptSubmit}
+                          className="space-y-4"
+                        >
+                          <h3 className="font-semibold">
+                            AI Workout Assistant
+                          </h3>
+                          <Textarea
+                            value={prompt}
+                            onChange={(e) => setPrompt(e.target.value)}
+                            placeholder="Describe the workout you want (e.g., '30-minute HIIT for beginners')"
+                            disabled={isAiLoading}
+                          />
+                          <Button type="submit" disabled={isAiLoading}>
+                            {isAiLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              "Generate Workout"
+                            )}
+                          </Button>
+                        </form>
+                      </PopoverContent>
+                    </Popover>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Need help creating your workout?</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <Reorder.Group
               axis="y"
               values={workout.items}
@@ -504,244 +529,233 @@ export function WorkoutBuilder({
                 })}
               </div>
             </Reorder.Group>
-          </div>
-        </div>
-      )}
 
-      <div className="flex justify-between items-center mt-4">
-        <Dialog
-          open={isIntervalDialogOpen}
-          onOpenChange={setIsIntervalDialogOpen}
-        >
-          <DialogTrigger asChild>
-            <Button
-              type="button" // Prevent form submission
-              disabled={
-                createWorkoutMutation.isPending ||
-                updateWorkoutMutation.isPending
-              }
-              onClick={() => {
-                setEditingItem(null);
-                setIsIntervalDialogOpen(true);
-                setIsRepeatMode(false);
-                setNewInterval({
-                  id: workout.items.length + 1,
-                  type: IntervalType.ACTIVE,
-                  durationType: DurationType.TIME,
-                  durationValue: 0,
-                  durationUnit: "minutes",
-                  intensityType: IntensityType.NONE,
-                  intensityMin: "",
-                  intensityMax: "",
-                });
-                setNewRepeatGroup({
-                  intervals: [newInterval],
-                  repeats: 1,
-                });
-              }}
-            >
-              {createWorkoutMutation.isPending ||
-              updateWorkoutMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditing ? "Updating..." : "Creating..."}
-                </>
-              ) : (
-                "Add Interval"
-              )}
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            className={`sm:max-w-[425px] ${
-              theme === "dark"
-                ? "bg-gray-800 text-white"
-                : " bg-blue-600 bg-white text-black"
-            }`}
-          >
-            <DialogHeader>
-              <DialogTitle>
-                {editingItem
-                  ? isRepeatMode
-                    ? "Edit Repeat Group"
-                    : "Edit Interval"
-                  : isRepeatMode
-                  ? "Add New Repeat"
-                  : "Add New Interval"}
-              </DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[60vh] pr-4">
-              {isRepeatMode ? (
-                <div className="grid gap-4">
-                  {newRepeatGroup.intervals.map((interval, index) => (
-                    <div
-                      key={interval.id}
-                      className={`p-4 rounded-md ${getIntervalColor(
-                        interval.type
-                      )}`}
-                    >
-                      <IntervalForm
-                        interval={interval}
-                        onChange={(updatedInterval) => {
-                          setNewRepeatGroup((prev) => ({
-                            ...prev,
-                            intervals: prev.intervals.map((i) =>
-                              i.id === interval.id ? updatedInterval : i
-                            ),
-                          }));
-                          if (index === 0) {
-                            setNewInterval(updatedInterval);
-                          }
-                        }}
-                        onRemove={
-                          newRepeatGroup.intervals.length > 1
-                            ? () => {
+            <div className="flex justify-between items-center mt-4">
+              <Dialog
+                open={isIntervalDialogOpen}
+                onOpenChange={setIsIntervalDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    disabled={
+                      createWorkoutMutation.isPending ||
+                      updateWorkoutMutation.isPending
+                    }
+                    onClick={() => {
+                      setEditingItem(null);
+                      setIsIntervalDialogOpen(true);
+                      setIsRepeatMode(false);
+                      setNewInterval({
+                        id: workout.items.length + 1,
+                        type: IntervalType.ACTIVE,
+                        durationType: DurationType.TIME,
+                        durationValue: 0,
+                        durationUnit: "minutes",
+                        intensityType: IntensityType.NONE,
+                        intensityMin: "",
+                        intensityMax: "",
+                      });
+                      setNewRepeatGroup({
+                        intervals: [newInterval],
+                        repeats: 1,
+                      });
+                    }}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Interval
+                  </Button>
+                </DialogTrigger>
+                <DialogContent
+                  className={`sm:max-w-[425px] ${
+                    theme === "dark"
+                      ? "bg-gray-800 text-white"
+                      : " bg-blue-600 bg-white text-black"
+                  }`}
+                >
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingItem
+                        ? isRepeatMode
+                          ? "Edit Repeat Group"
+                          : "Edit Interval"
+                        : isRepeatMode
+                        ? "Add New Repeat"
+                        : "Add New Interval"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <ScrollArea className="max-h-[60vh] pr-4">
+                    {isRepeatMode ? (
+                      <div className="grid gap-4">
+                        {newRepeatGroup.intervals.map((interval, index) => (
+                          <div
+                            key={interval.id}
+                            className={`p-4 rounded-md ${getIntervalColor(
+                              interval.type
+                            )}`}
+                          >
+                            <IntervalForm
+                              interval={interval}
+                              onChange={(updatedInterval) => {
                                 setNewRepeatGroup((prev) => ({
                                   ...prev,
-                                  intervals: prev.intervals.filter(
-                                    (i) => i.id !== interval.id
+                                  intervals: prev.intervals.map((i) =>
+                                    i.id === interval.id ? updatedInterval : i
                                   ),
                                 }));
+                                if (index === 0) {
+                                  setNewInterval(updatedInterval);
+                                }
+                              }}
+                              onRemove={
+                                newRepeatGroup.intervals.length > 1
+                                  ? () => {
+                                      setNewRepeatGroup((prev) => ({
+                                        ...prev,
+                                        intervals: prev.intervals.filter(
+                                          (i) => i.id !== interval.id
+                                        ),
+                                      }));
+                                    }
+                                  : undefined
                               }
-                            : undefined
-                        }
-                      />
-                      {index < newRepeatGroup.intervals.length - 1 && (
-                        <Separator className="my-4" />
-                      )}
-                    </div>
-                  ))}
-                  <Button
-                    type="button" // Prevent form submission
-                    onClick={() =>
-                      setNewRepeatGroup((prev) => ({
-                        ...prev,
-                        intervals: [
-                          ...prev.intervals,
-                          {
-                            id: prev.intervals.length + 1,
-                            type: IntervalType.ACTIVE,
-                            durationType: DurationType.TIME,
-                            durationValue: 0,
-                            durationUnit: "minutes",
-                            intensityType: IntensityType.NONE,
-                            intensityMin: "",
-                            intensityMax: "",
-                          },
-                        ],
-                      }))
-                    }
-                  >
-                    Add Interval to Repeat
-                  </Button>
-                  <div>
-                    <Label htmlFor="repeats">Number of Repeats</Label>
-                    <Input
-                      id="repeats"
-                      type="number"
-                      value={newRepeatGroup.repeats}
-                      onChange={(e) =>
-                        setNewRepeatGroup((prev) => ({
-                          ...prev,
-                          repeats: Number(e.target.value),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="addRestInterval"
-                      checked={!!newRepeatGroup.restInterval}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewRepeatGroup((prev) => ({
-                            ...prev,
-                            restInterval: {
-                              id: prev.intervals.length + 1,
-                              type: IntervalType.REST,
-                              durationType: DurationType.TIME,
-                              durationValue: 0,
-                              durationUnit: "minutes",
-                              intensityType: IntensityType.NONE,
-                              intensityMin: "",
-                              intensityMax: "",
-                            },
-                          }));
-                        } else {
-                          setNewRepeatGroup((prev) => ({
-                            ...prev,
-                            restInterval: undefined,
-                          }));
-                        }
-                      }}
-                    />
-                    <Label htmlFor="addRestInterval">Add Rest Interval</Label>
-                  </div>
-                  {newRepeatGroup.restInterval && (
-                    <div
-                      className={`p-4 rounded-md ${getIntervalColor(
-                        IntervalType.REST
-                      )}`}
-                    >
-                      <h4 className="font-semibold mb-2">Rest Interval</h4>
+                            />
+                            {index < newRepeatGroup.intervals.length - 1 && (
+                              <Separator className="my-4" />
+                            )}
+                          </div>
+                        ))}
+                        <Button
+                          type="button" // Prevent form submission
+                          onClick={() =>
+                            setNewRepeatGroup((prev) => ({
+                              ...prev,
+                              intervals: [
+                                ...prev.intervals,
+                                {
+                                  id: prev.intervals.length + 1,
+                                  type: IntervalType.ACTIVE,
+                                  durationType: DurationType.TIME,
+                                  durationValue: 0,
+                                  durationUnit: "minutes",
+                                  intensityType: IntensityType.NONE,
+                                  intensityMin: "",
+                                  intensityMax: "",
+                                },
+                              ],
+                            }))
+                          }
+                        >
+                          Add Interval to Repeat
+                        </Button>
+                        <div>
+                          <Label htmlFor="repeats">Number of Repeats</Label>
+                          <Input
+                            id="repeats"
+                            type="number"
+                            value={newRepeatGroup.repeats}
+                            onChange={(e) =>
+                              setNewRepeatGroup((prev) => ({
+                                ...prev,
+                                repeats: Number(e.target.value),
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="addRestInterval"
+                            checked={!!newRepeatGroup.restInterval}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setNewRepeatGroup((prev) => ({
+                                  ...prev,
+                                  restInterval: {
+                                    id: prev.intervals.length + 1,
+                                    type: IntervalType.REST,
+                                    durationType: DurationType.TIME,
+                                    durationValue: 0,
+                                    durationUnit: "minutes",
+                                    intensityType: IntensityType.NONE,
+                                    intensityMin: "",
+                                    intensityMax: "",
+                                  },
+                                }));
+                              } else {
+                                setNewRepeatGroup((prev) => ({
+                                  ...prev,
+                                  restInterval: undefined,
+                                }));
+                              }
+                            }}
+                          />
+                          <Label htmlFor="addRestInterval">
+                            Add Rest Interval
+                          </Label>
+                        </div>
+                        {newRepeatGroup.restInterval && (
+                          <div
+                            className={`p-4 rounded-md ${getIntervalColor(
+                              IntervalType.REST
+                            )}`}
+                          >
+                            <h4 className="font-semibold mb-2">
+                              Rest Interval
+                            </h4>
+                            <IntervalForm
+                              interval={newRepeatGroup.restInterval}
+                              onChange={(updatedInterval) => {
+                                setNewRepeatGroup((prev) => ({
+                                  ...prev,
+                                  restInterval: updatedInterval,
+                                }));
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                       <IntervalForm
-                        interval={newRepeatGroup.restInterval}
-                        onChange={(updatedInterval) => {
-                          setNewRepeatGroup((prev) => ({
-                            ...prev,
-                            restInterval: updatedInterval,
-                          }));
-                        }}
+                        interval={newInterval}
+                        onChange={setNewInterval}
                       />
+                    )}
+                  </ScrollArea>
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="enableRepeat"
+                        checked={isRepeatMode}
+                        onCheckedChange={setIsRepeatMode}
+                        disabled={!!editingItem}
+                      />
+                      <Label htmlFor="enableRepeat">Enable Repeat</Label>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <IntervalForm
-                  interval={newInterval}
-                  onChange={setNewInterval}
-                />
-              )}
-            </ScrollArea>
-            <div className="flex justify-between items-center mt-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="enableRepeat"
-                  checked={isRepeatMode}
-                  onCheckedChange={setIsRepeatMode}
-                  disabled={!!editingItem}
-                />
-                <Label htmlFor="enableRepeat">Enable Repeat</Label>
-              </div>
-              <Button type="button" onClick={updateItem}>
-                {editingItem
-                  ? "Update"
-                  : isRepeatMode
-                  ? "Add Repeat"
-                  : "Add Interval"}
-              </Button>
+                    <Button type="button" onClick={updateItem}>
+                      {editingItem
+                        ? "Update"
+                        : isRepeatMode
+                        ? "Add Repeat"
+                        : "Add Interval"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          </DialogContent>
-        </Dialog>
+          </CardContent>
+        </Card>
 
-        {/* Create/Update Workout Button */}
         <Button
           type="button"
+          className="w-full"
           onClick={() => setIsSubmitDialogOpen(true)}
           disabled={
             createWorkoutMutation.isPending || updateWorkoutMutation.isPending
           }
         >
-          {createWorkoutMutation.isPending ||
-          updateWorkoutMutation.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditing ? "Updating..." : "Creating..."}
-            </>
-          ) : isEditing ? (
-            "Update Workout"
-          ) : (
-            "Create Workout"
-          )}
+          {isEditing ? "Update Workout" : "Create Workout"}
         </Button>
 
         {/* Submit Dialog */}
@@ -791,7 +805,7 @@ export function WorkoutBuilder({
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </form>
     </div>
   );
 }
