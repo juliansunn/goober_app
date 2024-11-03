@@ -46,7 +46,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStrava } from "@fortawesome/free-brands-svg-icons";
 import { cn } from "@/lib/utils";
-import SmallLogo from "./small-logo";
 import HeaderLogo from "./header-logo";
 
 const data = {
@@ -138,7 +137,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="border-b px-6 h-14 mb-2">
         <HeaderLogo />
       </SidebarHeader>
       <SidebarContent>
