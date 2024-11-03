@@ -23,6 +23,7 @@ import {
 import { useSession, signIn, signOut } from "next-auth/react";
 
 import {
+  BookOpenCheck,
   Calendar,
   ChevronDown,
   Dumbbell,
@@ -45,6 +46,8 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStrava } from "@fortawesome/free-brands-svg-icons";
 import { cn } from "@/lib/utils";
+import SmallLogo from "./small-logo";
+import HeaderLogo from "./header-logo";
 
 const data = {
   navMain: [
@@ -62,6 +65,7 @@ const data = {
       label: "Workouts",
       href: "/workouts",
       subItems: [
+        { icon: BookOpenCheck, label: "Library", href: "/workouts" },
         { icon: PlusCircle, label: "Create", href: "/workouts/create" },
         { icon: Search, label: "Explore", href: "/workouts/explore" },
       ],
@@ -134,7 +138,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader></SidebarHeader>
+      <SidebarHeader className="p-4">
+        <HeaderLogo />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
           {data.navMain.map((item) => (

@@ -6,7 +6,6 @@ import { Workout } from "@/types/workouts";
 import { getWorkoutsList } from "@/functions/workouts";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 import { ErrorDisplay } from "@/components/error-display";
 import { LoadingCenter } from "@/components/loading-center";
 
@@ -18,11 +17,7 @@ interface WorkoutsResponse {
   hasMore: boolean;
 }
 
-interface WorkoutsProps {
-  onSelectWorkout?: (workoutId: number) => void;
-}
-
-export default function Workouts({ onSelectWorkout }: WorkoutsProps) {
+export default function Workouts() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
@@ -50,12 +45,6 @@ export default function Workouts({ onSelectWorkout }: WorkoutsProps) {
     router.push(
       `/workouts?page=1&limit=${newLimit}${type ? `&type=${type}` : ""}`
     );
-  };
-
-  const handleWorkoutSelect = (workoutId: number) => {
-    if (onSelectWorkout) {
-      onSelectWorkout(workoutId);
-    }
   };
 
   if (isLoading) {
