@@ -45,7 +45,7 @@ export function MarkdownInput({
     <div ref={ref} className="relative w-full min-w-[300px] max-w-2xl">
       {(isEditing || isEditable) && (
         <div className="flex items-center mb-2">
-          <Label className="text-lg font-bold">{label}</Label>
+          <Label className="text-sm">{label}</Label>
           {isEditable && (
             <Button
               variant="ghost"

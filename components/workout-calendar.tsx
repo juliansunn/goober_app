@@ -51,6 +51,7 @@ export function WorkoutCalendarComponent({
     calendarItems,
     bulkCreateScheduledWorkouts,
     clearGeneratedScheduledWorkouts,
+    generateSchedule,
   } = useWorkout();
 
   const queryClient = useQueryClient();
