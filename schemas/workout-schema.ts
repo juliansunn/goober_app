@@ -43,7 +43,9 @@ export const createWorkoutSchema = z.object({
 });
 
 // Workout schema for updates (all fields optional)
-export const updateWorkoutSchema = createWorkoutSchema.partial();
+export const updateWorkoutSchema = createWorkoutSchema.partial().extend({
+  id: z.number().positive(),
+});
 
 // User schema
 const userSchema = z.object({

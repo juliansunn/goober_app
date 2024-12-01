@@ -53,7 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDeleteWorkout } from "@/hooks/use-delete-workout";
+import { useDeleteWorkout } from "@/hooks/useDeleteWorkout";
 import { ConfirmationDialog } from "@/components/confirm-dialog";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { WorkoutBuilder } from "@/components/workout-builder";
@@ -291,17 +291,7 @@ export function WorkoutTable({
             <Button>Add Workout</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[900px]">
-            <div className="flex h-[600px]">
-              <div className="w-1/3 border-r pr-4">
-                <WorkoutBuilder
-                  onSave={() => setIsAddWorkoutModalOpen(false)}
-                />
-              </div>
-              <div className="w-2/3 pl-4">
-                <h3 className="text-lg font-semibold mb-2">Workout Preview</h3>
-                <p>Preview of the workout will be shown here.</p>
-              </div>
-            </div>
+            <WorkoutBuilder onSave={() => setIsAddWorkoutModalOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>

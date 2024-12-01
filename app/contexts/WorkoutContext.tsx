@@ -1,12 +1,33 @@
 "use client";
 
-import { CalendarItem, ScheduledWorkout, StravaActivity } from "@/types";
+import {
+  WorkoutType,
+  IntervalType,
+  DurationType,
+  IntensityType,
+} from "@prisma/client";
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getScheduledWorkoutsList } from "@/functions/scheduled-workouts";
 import { getStravaActivities } from "@/functions/strava";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
+import {
+  CreateWorkoutInput,
+  UpdateWorkoutInput,
+} from "@/schemas/workout-schema";
+import { useCreateWorkout } from "@/hooks/useCreateWorkout";
+import { useUpdateWorkout } from "@/hooks/useUpdateWorkout";
+import {
+  CalendarItem,
+  Interval,
+  RepeatGroup,
+  ScheduledWorkout,
+  StravaActivity,
+  Workout,
+  WorkoutItem,
+} from "@/types";
 
 // Add this type definition
 type GeneratedScheduledWorkout = ScheduledWorkout & { notes: string };
@@ -26,6 +47,31 @@ type WorkoutContextType = {
   calendarItems: CalendarItem[];
   bulkCreateScheduledWorkouts: () => Promise<void>;
   clearGeneratedScheduledWorkouts: () => void;
+  createOrUpdateWorkout: (
+    workoutData: CreateWorkoutInput | UpdateWorkoutInput,
+    isEditing: boolean
+  ) => Promise<Workout>;
+  isLoadingCreateOrUpdateWorkout: boolean;
+  builderWorkout: Workout;
+  setBuilderWorkout: (workout: Workout) => void;
+  isEditing: boolean;
+  editingItem: WorkoutItem | null;
+  setEditingItem: (item: WorkoutItem | null) => void;
+  newInterval: Interval;
+  setNewInterval: (interval: Interval) => void;
+  newRepeatGroup: RepeatGroup;
+  setNewRepeatGroup: (group: RepeatGroup) => void;
+  resetBuilderWorkout: () => void;
+  addWorkoutItem: (isRepeatMode: boolean) => void;
+  removeWorkoutItem: (idToRemove: number) => void;
+  updateWorkoutItem: (
+    itemId: number,
+    isRepeatMode: boolean,
+    updatedInterval: Interval | RepeatGroup
+  ) => void;
+  reorderWorkoutItems: (newOrder: WorkoutItem[]) => void;
+  setIsEditing: (isEditing: boolean) => void;
+  initializeWorkout: (existingWorkout: Workout | null) => void;
 };
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -39,6 +85,8 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [page, setPage] = useState(1);
+  const [isLoadingCreateOrUpdateWorkout, setIsLoadingCreateOrUpdateWorkout] =
+    useState(false);
   const perPage = 50;
 
   const {
@@ -172,6 +220,165 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     setGeneratedScheduledWorkouts([]);
   };
 
+  const createWorkoutMutation = useCreateWorkout();
+  const updateWorkoutMutation = useUpdateWorkout();
+
+  const createOrUpdateWorkout = async (
+    workoutData: CreateWorkoutInput | UpdateWorkoutInput,
+    isEditing: boolean
+  ) => {
+    console.log("createOrUpdateWorkout", workoutData, isEditing);
+    try {
+      const workoutId = isEditing
+        ? (workoutData as UpdateWorkoutInput).id.toString()
+        : null;
+      setIsLoadingCreateOrUpdateWorkout(
+        createWorkoutMutation.isPending || updateWorkoutMutation.isPending
+      );
+      const workout =
+        isEditing && workoutId
+          ? await updateWorkoutMutation.mutateAsync({
+              workoutId,
+              workoutData: workoutData as UpdateWorkoutInput,
+            })
+          : await createWorkoutMutation.mutateAsync(
+              workoutData as CreateWorkoutInput
+            );
+
+      toast.success(isEditing ? "Workout updated!" : "Workout created!");
+      return workout as Workout;
+    } catch (error) {
+      console.error("Error saving workout:", error);
+      toast.error(
+        isEditing
+          ? "Failed to update workout: " + error
+          : "Failed to create workout: " + error
+      );
+      throw error;
+    }
+  };
+
+  // Add builder-specific state
+  const defaultEmptyWorkout = {
+    title: "",
+    description: "",
+    type: WorkoutType.RUN,
+    items: [],
+  };
+
+  const [builderWorkout, setBuilderWorkout] =
+    useState<Workout>(defaultEmptyWorkout);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingItem, setEditingItem] = useState<WorkoutItem | null>(null);
+  const [newInterval, setNewInterval] = useState<Interval>({
+    type: IntervalType.ACTIVE,
+    durationType: DurationType.TIME,
+    durationValue: 0,
+    durationUnit: "minutes",
+    intensityType: IntensityType.NONE,
+    intensityMin: "",
+    intensityMax: "",
+  });
+  const [newRepeatGroup, setNewRepeatGroup] = useState<RepeatGroup>({
+    intervals: [newInterval],
+    repeats: 1,
+  });
+
+  const resetBuilderWorkout = useCallback(() => {
+    setBuilderWorkout(defaultEmptyWorkout);
+    setIsEditing(false);
+    setEditingItem(null);
+  }, []);
+
+  const addWorkoutItem = useCallback(
+    (isRepeatMode: boolean) => {
+      const newId = builderWorkout.items.length + 1;
+      if (isRepeatMode) {
+        setBuilderWorkout((prev) => ({
+          ...prev,
+          items: [
+            ...prev.items,
+            {
+              id: newId,
+              order: prev.items.length,
+              repeatGroup: newRepeatGroup,
+            },
+          ],
+        }));
+        setNewRepeatGroup({
+          intervals: [newInterval],
+          repeats: 1,
+        });
+      } else {
+        setBuilderWorkout((prev) => ({
+          ...prev,
+          items: [
+            ...prev.items,
+            { id: newId, order: prev.items.length, interval: newInterval },
+          ],
+        }));
+        setNewInterval({
+          type: IntervalType.ACTIVE,
+          durationType: DurationType.TIME,
+          durationValue: 0,
+          durationUnit: "minutes",
+          intensityType: IntensityType.NONE,
+          intensityMin: "",
+          intensityMax: "",
+        });
+      }
+    },
+    [builderWorkout.items.length, newInterval, newRepeatGroup]
+  );
+
+  const removeWorkoutItem = useCallback((idToRemove: number) => {
+    setBuilderWorkout((prev) => ({
+      ...prev,
+      items: prev.items
+        .filter((item) => item.id !== idToRemove)
+        .map((item, index) => ({ ...item, order: index })),
+    }));
+  }, []);
+
+  const updateWorkoutItem = useCallback(
+    (
+      itemId: number,
+      isRepeatMode: boolean,
+      updatedInterval: Interval | RepeatGroup
+    ) => {
+      setBuilderWorkout((prev) => ({
+        ...prev,
+        items: prev.items.map((item) => {
+          if (item.id === itemId) {
+            return isRepeatMode
+              ? { ...item, repeatGroup: updatedInterval as RepeatGroup }
+              : { ...item, interval: updatedInterval as Interval };
+          }
+          return item;
+        }),
+      }));
+    },
+    []
+  );
+
+  const reorderWorkoutItems = useCallback((newOrder: WorkoutItem[]) => {
+    setBuilderWorkout((prev) => ({
+      ...prev,
+      items: newOrder.map((item, index) => ({ ...item, order: index })),
+    }));
+  }, []);
+
+  const initializeWorkout = useCallback((existingWorkout: Workout | null) => {
+    if (existingWorkout) {
+      setBuilderWorkout(existingWorkout);
+      setIsEditing(true);
+    } else {
+      setBuilderWorkout(defaultEmptyWorkout);
+      setIsEditing(false);
+    }
+    setEditingItem(null);
+  }, []);
+
   return (
     <WorkoutContext.Provider
       value={{
@@ -189,6 +396,24 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         calendarItems,
         bulkCreateScheduledWorkouts,
         clearGeneratedScheduledWorkouts,
+        createOrUpdateWorkout,
+        isLoadingCreateOrUpdateWorkout,
+        builderWorkout,
+        setBuilderWorkout,
+        isEditing,
+        editingItem,
+        setEditingItem,
+        newInterval,
+        setNewInterval,
+        newRepeatGroup,
+        setNewRepeatGroup,
+        resetBuilderWorkout,
+        addWorkoutItem,
+        removeWorkoutItem,
+        updateWorkoutItem,
+        reorderWorkoutItems,
+        setIsEditing,
+        initializeWorkout,
       }}
     >
       {children}

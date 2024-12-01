@@ -1,5 +1,16 @@
 import { CalendarItem } from "./calendar";
-import { ScheduledWorkout, Workout, WorkoutType, User } from "./workouts";
+import {
+  ScheduledWorkout,
+  Workout,
+  WorkoutType,
+  User,
+  Interval,
+  IntervalType,
+  DurationType,
+  IntensityType,
+  WorkoutItem,
+  RepeatGroup,
+} from "./workouts";
 import { StravaActivity, ExtendedSession } from "./strava";
 import {
   IntervalTypeSchema,
@@ -25,4 +36,10 @@ export type {
   intervalSchema,
   repeatGroupSchema,
   workoutSchema,
+  Interval,
+  IntervalType,
+  DurationType,
+  IntensityType,
+  WorkoutItem,
+  RepeatGroup,
 };
