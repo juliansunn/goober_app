@@ -1,4 +1,4 @@
-import { WorkoutBuilder } from "@/components/workout-builder";
+import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 

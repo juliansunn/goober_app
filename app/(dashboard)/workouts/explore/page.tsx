@@ -1,43 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { WorkoutBuilder } from "@/components/workout-builder";
+import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 import { Workout } from "@/types/workouts";
-import { Bot, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Bot } from "lucide-react";
+import { ExpandingPromptInput } from "@/components/CustomTextArea";
+import { generateWorkout } from "@/functions/generators";
 
 const Explore = () => {
   const [prompt, setPrompt] = useState("");
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  console.log("prompt", prompt);
 
-  const handlePromptSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerateWorkout = async () => {
     setIsLoading(true);
+    const workout = await generateWorkout(prompt);
 
-    try {
-      const response = await fetch("/api/generate-workout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setWorkout(data.workout);
-    } catch (error) {
-      console.error("Error generating workout:", error);
-      toast("error");
-    } finally {
-      setIsLoading(false);
-    }
+    setWorkout(workout);
+    setIsLoading(false);
   };
 
   return (
@@ -45,31 +26,14 @@ const Explore = () => {
       <div className="flex items-center justify-center mb-8">
         <h1 className="text-4xl font-bold">Explore AI-Generated Workouts</h1>
       </div>
-
-      <form onSubmit={handlePromptSubmit} className="mb-8">
-        <div className="relative">
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe the workout you want (e.g., '30-minute HIIT for beginners')"
-            disabled={isLoading}
-            className="pr-16 rounded-3xl w-full min-h-[2.5rem] max-h-32 text-md resize-none overflow-hidden"
-            style={{ paddingTop: "0.625rem", paddingBottom: "0.625rem" }}
-          />
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="absolute right-0 top-0 h-full rounded-r-3xl px-5 bg-primary text-primary-foreground hover:bg-primary/90"
-            aria-label="Generate Workout"
-          >
-            {isLoading ? (
-              <Loader2 className="h-7 w-7 animate-spin" />
-            ) : (
-              <Bot className="h-7 w-7" />
-            )}
-          </Button>
-        </div>
-      </form>
+      <ExpandingPromptInput
+        onSubmit={handleGenerateWorkout}
+        prompt={prompt}
+        onChange={setPrompt}
+        placeholder="Describe the workout you want (e.g., '30-minute HIIT for beginners')"
+        isLoading={isLoading}
+        icon={<Bot className="h-5 w-5" />}
+      />
 
       {isLoading && (
         <div className="flex justify-center items-center mt-8">
@@ -81,11 +45,7 @@ const Explore = () => {
         </div>
       )}
 
-      {workout && (
-        <div>
-          <WorkoutBuilder existingWorkout={workout} />
-        </div>
-      )}
+      {workout && <WorkoutBuilder existingWorkout={workout} />}
     </div>
   );
 };

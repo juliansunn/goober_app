@@ -22,6 +22,8 @@ export const IntensityTypeSchema = z.enum(
 );
 
 const singleIntervalSchema = z.object({
+  id: z.number().int(),
+  order: z.number().int(),
   type: IntervalTypeSchema,
   durationType: DurationTypeSchema,
   durationValue: z.number(),

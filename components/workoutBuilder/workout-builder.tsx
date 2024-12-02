@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/form";
 import IntervalItem from "./interval-item";
 import { getIntervalColor } from "@/lib/workout-utils";
-import IntervalForm from "./forms/interval-form";
+import IntervalForm from "../forms/interval-form";
 import { useTheme } from "next-themes";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -55,6 +55,7 @@ import { MarkdownInput } from "@/components/markdown-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { useForm } from "react-hook-form";
+import { IntervalList } from "./interval-list";
 
 interface WorkoutBuilderProps {
   existingWorkout?: Workout | null;
@@ -135,11 +136,25 @@ export function WorkoutBuilder({
     setIsIntervalDialogOpen(false);
   };
 
-  const handleEditInterval = (item: WorkoutItem) => {
+  const handleEditWorkoutItem = (item: WorkoutItem) => {
     setEditingItem(item);
     if (item.repeatGroup) {
       setIsRepeatMode(true);
       setNewRepeatGroup(item.repeatGroup);
+      if (item.repeatGroup.intervals.length > 0) {
+        const targetInterval = item.interval
+          ? item.repeatGroup.intervals.find(
+              (i) => i.id === item?.interval?.id
+            ) ||
+            item.repeatGroup.intervals[
+              item.repeatGroup.intervals.findIndex(
+                (i) => JSON.stringify(i) === JSON.stringify(item.interval)
+              )
+            ]
+          : item.repeatGroup.intervals[0];
+
+        setNewInterval(targetInterval);
+      }
     } else if (item.interval) {
       setIsRepeatMode(false);
       setNewInterval(item.interval);
@@ -149,6 +164,19 @@ export function WorkoutBuilder({
 
   const handleUpdateItem = () => {
     if (editingItem) {
+      if (isRepeatMode) {
+        const updatedIntervals = newRepeatGroup.intervals.map(
+          (interval, index) => {
+            if (interval.id && newInterval.id) {
+              return interval.id === newInterval.id ? newInterval : interval;
+            }
+            return JSON.stringify(interval) === JSON.stringify(newInterval)
+              ? newInterval
+              : interval;
+          }
+        );
+        setNewRepeatGroup({ ...newRepeatGroup, intervals: updatedIntervals });
+      }
       updateWorkoutItem(
         editingItem.id ?? 0,
         isRepeatMode,
@@ -160,15 +188,6 @@ export function WorkoutBuilder({
     setIsIntervalDialogOpen(false);
     setEditingItem(null);
   };
-
-  useEffect(() => {
-    if (isRepeatMode) {
-      setNewRepeatGroup({
-        ...newRepeatGroup,
-        intervals: [newInterval, ...newRepeatGroup.intervals.slice(1)],
-      });
-    }
-  }, [newInterval, isRepeatMode, newRepeatGroup]);
 
   const handleReorder = (newOrder: WorkoutItem[]) => {
     const updatedWorkout: Workout = {
@@ -274,202 +293,171 @@ export function WorkoutBuilder({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Intervals</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Reorder.Group
-              axis="y"
-              values={workout.items}
-              onReorder={handleReorder}
-            >
-              <div className="grid gap-2">
-                {workout.items.map((item, index) => {
-                  const workoutItem = item.interval
-                    ? item.interval
-                    : item.repeatGroup;
-                  if (!workoutItem) return null;
-                  if (item.id === undefined) return null;
-                  return (
-                    <Reorder.Item key={item.id} value={item}>
-                      <IntervalItem
-                        item={workoutItem}
-                        removeInterval={() => removeWorkoutItem(item.id ?? 0)}
-                        editInterval={() => handleEditInterval(item)}
-                        moveUp={() => moveInterval(item.id ?? 0, "up")}
-                        moveDown={() => moveInterval(item.id ?? 0, "down")}
-                        isFirst={index === 0}
-                        isLast={index === workout.items.length - 1}
-                      />
-                    </Reorder.Item>
-                  );
-                })}
-              </div>
-            </Reorder.Group>
+        <IntervalList
+          items={workout.items}
+          onReorder={handleReorder}
+          onRemoveInterval={removeWorkoutItem}
+          onEditInterval={handleEditWorkoutItem}
+          onMoveInterval={moveInterval}
+        />
 
-            <div className="flex justify-between items-center mt-4">
-              <Dialog
-                open={isIntervalDialogOpen}
-                onOpenChange={setIsIntervalDialogOpen}
+        <div className="flex justify-between items-center mt-4">
+          <Dialog
+            open={isIntervalDialogOpen}
+            onOpenChange={setIsIntervalDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                disabled={isLoading}
+                onClick={() => {
+                  setEditingItem(null);
+                  setIsIntervalDialogOpen(true);
+                  setIsRepeatMode(false);
+                  setNewInterval({
+                    id: workout.items.length + 1,
+                    type: IntervalType.ACTIVE,
+                    durationType: DurationType.TIME,
+                    durationValue: 0,
+                    durationUnit: "minutes",
+                    intensityType: IntensityType.NONE,
+                    intensityMin: "",
+                    intensityMax: "",
+                  });
+                  setNewRepeatGroup({
+                    intervals: [newInterval],
+                    repeats: 1,
+                  });
+                }}
               >
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    disabled={isLoading}
-                    onClick={() => {
-                      setEditingItem(null);
-                      setIsIntervalDialogOpen(true);
-                      setIsRepeatMode(false);
-                      setNewInterval({
-                        id: workout.items.length + 1,
-                        type: IntervalType.ACTIVE,
-                        durationType: DurationType.TIME,
-                        durationValue: 0,
-                        durationUnit: "minutes",
-                        intensityType: IntensityType.NONE,
-                        intensityMin: "",
-                        intensityMax: "",
-                      });
-                      setNewRepeatGroup({
-                        intervals: [newInterval],
-                        repeats: 1,
-                      });
-                    }}
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Interval
-                  </Button>
-                </DialogTrigger>
-                <DialogContent
-                  className={`sm:max-w-[425px] ${
-                    theme === "dark"
-                      ? "bg-gray-800 text-white"
-                      : " bg-blue-600 bg-white text-black"
-                  }`}
-                >
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingItem
-                        ? isRepeatMode
-                          ? "Edit Repeat Group"
-                          : "Edit Interval"
-                        : isRepeatMode
-                        ? "Add New Repeat"
-                        : "Add New Interval"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <ScrollArea className="max-h-[60vh] pr-4">
-                    {isRepeatMode ? (
-                      <div className="grid gap-4">
-                        {newRepeatGroup.intervals.map((interval, index) => (
-                          <div
-                            key={interval.id}
-                            className={`p-4 rounded-md ${getIntervalColor(
-                              interval.type
-                            )}`}
-                          >
-                            <IntervalForm
-                              interval={interval}
-                              onChange={(updatedInterval) => {
-                                setNewRepeatGroup({
-                                  ...newRepeatGroup,
-                                  intervals: newRepeatGroup.intervals.map((i) =>
-                                    i.id === interval.id ? updatedInterval : i
-                                  ),
-                                });
-                              }}
-                              onRemove={
-                                newRepeatGroup.intervals.length > 1
-                                  ? () => {
-                                      const filteredIntervals =
-                                        newRepeatGroup.intervals.filter(
-                                          (i) => i.id !== interval.id
-                                        );
-                                      setNewRepeatGroup({
-                                        ...newRepeatGroup,
-                                        intervals: filteredIntervals,
-                                      });
-                                    }
-                                  : undefined
-                              }
-                            />
-                            {index < newRepeatGroup.intervals.length - 1 && (
-                              <Separator className="my-4" />
-                            )}
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            const newInterval = {
-                              id: newRepeatGroup.intervals.length + 1,
-                              type: IntervalType.ACTIVE,
-                              durationType: DurationType.TIME,
-                              durationValue: 0,
-                              durationUnit: "minutes",
-                              intensityType: IntensityType.NONE,
-                              intensityMin: "",
-                              intensityMax: "",
-                            };
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Interval
+              </Button>
+            </DialogTrigger>
+            <DialogContent
+              className={`sm:max-w-[425px] ${
+                theme === "dark"
+                  ? "bg-gray-800 text-white"
+                  : " bg-blue-600 bg-white text-black"
+              }`}
+            >
+              <DialogHeader>
+                <DialogTitle>
+                  {editingItem
+                    ? isRepeatMode
+                      ? "Edit Repeat Group"
+                      : "Edit Interval"
+                    : isRepeatMode
+                    ? "Add New Repeat"
+                    : "Add New Interval"}
+                </DialogTitle>
+              </DialogHeader>
+              <ScrollArea className="max-h-[60vh] pr-4">
+                {isRepeatMode ? (
+                  <div className="grid gap-4">
+                    {newRepeatGroup.intervals.map((interval, index) => (
+                      <div
+                        key={interval.id}
+                        className={`p-4 rounded-md ${getIntervalColor(
+                          interval.type
+                        )}`}
+                      >
+                        <IntervalForm
+                          interval={interval}
+                          onChange={(updatedInterval) => {
                             setNewRepeatGroup({
                               ...newRepeatGroup,
-                              intervals: [
-                                ...newRepeatGroup.intervals,
-                                newInterval,
-                              ],
+                              intervals: newRepeatGroup.intervals.map((i) =>
+                                i.id === interval.id ? updatedInterval : i
+                              ),
                             });
                           }}
-                        >
-                          Add Interval to Repeat
-                        </Button>
-                        <div>
-                          <Label htmlFor="repeats">Number of Repeats</Label>
-                          <Input
-                            id="repeats"
-                            type="number"
-                            value={newRepeatGroup.repeats}
-                            onChange={(e) => {
-                              setNewRepeatGroup({
-                                ...newRepeatGroup,
-                                repeats: Number(e.target.value),
-                              });
-                            }}
-                          />
-                        </div>
+                          onRemove={
+                            newRepeatGroup.intervals.length > 1
+                              ? () => {
+                                  const filteredIntervals =
+                                    newRepeatGroup.intervals.filter(
+                                      (i) => i.id !== interval.id
+                                    );
+                                  setNewRepeatGroup({
+                                    ...newRepeatGroup,
+                                    intervals: filteredIntervals,
+                                  });
+                                }
+                              : undefined
+                          }
+                        />
+                        {index < newRepeatGroup.intervals.length - 1 && (
+                          <Separator className="my-4" />
+                        )}
                       </div>
-                    ) : (
-                      <IntervalForm
-                        interval={newInterval}
-                        onChange={setNewInterval}
-                      />
-                    )}
-                  </ScrollArea>
-                  <div className="flex justify-between items-center mt-4">
-                    <div className="flex items-center space-x-2">
-                      <Switch
-                        id="enableRepeat"
-                        checked={isRepeatMode}
-                        onCheckedChange={setIsRepeatMode}
-                        disabled={!!editingItem}
-                      />
-                      <Label htmlFor="enableRepeat">Enable Repeat</Label>
-                    </div>
-                    <Button type="button" onClick={handleUpdateItem}>
-                      {editingItem
-                        ? "Update"
-                        : isRepeatMode
-                        ? "Add Repeat"
-                        : "Add Interval"}
+                    ))}
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const newInterval = {
+                          id: newRepeatGroup.intervals.length + 1,
+                          type: IntervalType.ACTIVE,
+                          durationType: DurationType.TIME,
+                          durationValue: 0,
+                          durationUnit: "minutes",
+                          intensityType: IntensityType.NONE,
+                          intensityMin: "",
+                          intensityMax: "",
+                        };
+                        setNewRepeatGroup({
+                          ...newRepeatGroup,
+                          intervals: [...newRepeatGroup.intervals, newInterval],
+                        });
+                      }}
+                    >
+                      Add Interval to Repeat
                     </Button>
+                    <div>
+                      <Label htmlFor="repeats">Number of Repeats</Label>
+                      <Input
+                        id="repeats"
+                        type="number"
+                        value={newRepeatGroup.repeats}
+                        onChange={(e) => {
+                          setNewRepeatGroup({
+                            ...newRepeatGroup,
+                            repeats: Number(e.target.value),
+                          });
+                        }}
+                      />
+                    </div>
                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardContent>
-        </Card>
+                ) : (
+                  <IntervalForm
+                    interval={newInterval}
+                    onChange={setNewInterval}
+                  />
+                )}
+              </ScrollArea>
+              <div className="flex justify-between items-center mt-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="enableRepeat"
+                    checked={isRepeatMode}
+                    onCheckedChange={setIsRepeatMode}
+                    disabled={!!editingItem}
+                  />
+                  <Label htmlFor="enableRepeat">Enable Repeat</Label>
+                </div>
+                <Button type="button" onClick={handleUpdateItem}>
+                  {editingItem
+                    ? "Update"
+                    : isRepeatMode
+                    ? "Add Repeat"
+                    : "Add Interval"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
 
         <Button
           type="button"
