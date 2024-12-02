@@ -1,5 +1,5 @@
 "use client";
-import { WorkoutBuilder } from "@/components/workout-builder";
+import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 import React from "react";
 
 type Props = {};

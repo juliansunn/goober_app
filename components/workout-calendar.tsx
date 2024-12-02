@@ -5,7 +5,7 @@ import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { WorkoutBuilder } from "@/components/workout-builder";
+import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 import {
   GeneratedScheduledWorkout,
   ScheduledWorkout,

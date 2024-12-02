@@ -227,10 +227,9 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     workoutData: CreateWorkoutInput | UpdateWorkoutInput,
     isEditing: boolean
   ) => {
-    console.log("createOrUpdateWorkout", workoutData, isEditing);
     try {
       const workoutId = isEditing
-        ? (workoutData as UpdateWorkoutInput).id.toString()
+        ? (workoutData as UpdateWorkoutInput).id?.toString()
         : null;
       setIsLoadingCreateOrUpdateWorkout(
         createWorkoutMutation.isPending || updateWorkoutMutation.isPending

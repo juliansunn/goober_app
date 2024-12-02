@@ -56,7 +56,7 @@ import {
 import { useDeleteWorkout } from "@/hooks/useDeleteWorkout";
 import { ConfirmationDialog } from "@/components/confirm-dialog";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { WorkoutBuilder } from "@/components/workout-builder";
+import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 
 type SkillLevel = "Beginner" | "Intermediate" | "Advanced";
 
