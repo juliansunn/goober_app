@@ -28,7 +28,6 @@ const DurationSelector = ({
   durationUnit: string;
   onChange: (type: DurationType, value: number, unit: string) => void;
 }) => {
-  const { theme } = useTheme();
   return (
     <div className="grid gap-2">
       <Label>Duration Type</Label>
@@ -38,9 +37,7 @@ const DurationSelector = ({
           onChange(value, durationValue, durationUnit)
         }
       >
-        <SelectTrigger
-          className={theme === "dark" ? "bg-gray-700" : "bg-gray-100"}
-        >
+        <SelectTrigger>
           <SelectValue placeholder="Select duration type" />
         </SelectTrigger>
         <SelectContent>
@@ -57,7 +54,7 @@ const DurationSelector = ({
           onChange={(e) =>
             onChange(durationType, Number(e.target.value), durationUnit)
           }
-          className="flex-grow bg-white"
+          className="flex-grow"
         />
         <Select
           value={durationUnit}
@@ -65,29 +62,29 @@ const DurationSelector = ({
             onChange(durationType, durationValue, value)
           }
         >
-          <SelectTrigger className="w-[100px] bg-white">
+          <SelectTrigger className="w-[100px]">
             <SelectValue placeholder="Unit" />
           </SelectTrigger>
           <SelectContent>
             {durationType === DurationType.TIME && (
               <>
-                <SelectItem value="seconds">Seconds</SelectItem>
-                <SelectItem value="minutes">Minutes</SelectItem>
-                <SelectItem value="hours">Hours</SelectItem>
+                <SelectItem value="SECONDS">Seconds</SelectItem>
+                <SelectItem value="MINUTES">Minutes</SelectItem>
+                <SelectItem value="HOURS">Hours</SelectItem>
               </>
             )}
             {durationType === DurationType.DISTANCE && (
               <>
-                <SelectItem value="meters">Meters</SelectItem>
-                <SelectItem value="kilometers">Kilometers</SelectItem>
-                <SelectItem value="miles">Miles</SelectItem>
+                <SelectItem value="METERS">Meters</SelectItem>
+                <SelectItem value="KILOMETERS">Kilometers</SelectItem>
+                <SelectItem value="MILES">Miles</SelectItem>
               </>
             )}
             {durationType === DurationType.HEART_RATE && (
-              <SelectItem value="bpm">BPM</SelectItem>
+              <SelectItem value="BPM">BPM</SelectItem>
             )}
             {durationType === DurationType.CALORIES && (
-              <SelectItem value="calories">Calories</SelectItem>
+              <SelectItem value="CALORIES">Calories</SelectItem>
             )}
           </SelectContent>
         </Select>
@@ -107,7 +104,6 @@ const IntensityTargetSelector = ({
   intensityMax: string;
   onChange: (type: IntensityType, min: string, max: string) => void;
 }) => {
-  const { theme } = useTheme();
   const isPaceType = Object.values(IntensityType).includes(intensityType);
   const unit =
     intensityType === IntensityType.CADENCE
@@ -131,9 +127,7 @@ const IntensityTargetSelector = ({
         value={intensityType}
         onValueChange={(value: IntensityType) => onChange(value, "", "")}
       >
-        <SelectTrigger
-          className={theme === "dark" ? "bg-gray-700" : "bg-gray-100"}
-        >
+        <SelectTrigger>
           <SelectValue placeholder="Select intensity type" />
         </SelectTrigger>
         <SelectContent>
@@ -159,7 +153,6 @@ const IntensityTargetSelector = ({
               onChange(intensityType, e.target.value, intensityMax)
             }
             placeholder="Min"
-            className="bg-white"
           />
           <span>to</span>
           <Input
@@ -169,7 +162,6 @@ const IntensityTargetSelector = ({
               onChange(intensityType, intensityMin, e.target.value)
             }
             placeholder="Max"
-            className="bg-white"
           />
           <span>{unit}</span>
         </div>
@@ -187,14 +179,8 @@ const IntervalForm = ({
   onChange: (interval: Interval) => void;
   onRemove?: () => void;
 }) => {
-  const { theme } = useTheme();
-
   return (
-    <div
-      className={`grid gap-4 p-4 rounded-lg ${
-        theme === "dark" ? "bg-gray-800 text-white" : "text-black"
-      }`}
-    >
+    <div className="grid gap-4 p-4 rounded-lg">
       <div className="flex justify-between items-center">
         <Label htmlFor="intervalType">Interval Type</Label>
         {onRemove && (

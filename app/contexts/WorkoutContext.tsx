@@ -399,7 +399,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         isLoadingCreateOrUpdateWorkout,
         builderWorkout,
         setBuilderWorkout,
-        isEditing,
         editingItem,
         setEditingItem,
         newInterval,
@@ -411,6 +410,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         removeWorkoutItem,
         updateWorkoutItem,
         reorderWorkoutItems,
+        isEditing,
         setIsEditing,
         initializeWorkout,
       }}

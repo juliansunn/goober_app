@@ -32,7 +32,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import IntervalItem from "./interval-item";
 import { getIntervalColor } from "@/lib/workout-utils";
 import IntervalForm from "../forms/interval-form";
 import { useTheme } from "next-themes";
@@ -80,10 +79,8 @@ export function WorkoutBuilder({
     addWorkoutItem,
     removeWorkoutItem,
     updateWorkoutItem,
-    reorderWorkoutItems,
     createOrUpdateWorkout,
     isLoadingCreateOrUpdateWorkout: isLoading,
-    setIsEditing,
     initializeWorkout,
   } = useWorkout();
 
@@ -402,7 +399,7 @@ export function WorkoutBuilder({
                           type: IntervalType.ACTIVE,
                           durationType: DurationType.TIME,
                           durationValue: 0,
-                          durationUnit: "minutes",
+                          durationUnit: "MINUTES",
                           intensityType: IntensityType.NONE,
                           intensityMin: "",
                           intensityMax: "",

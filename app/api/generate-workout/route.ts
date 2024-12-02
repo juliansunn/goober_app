@@ -43,14 +43,10 @@ export async function POST(req: Request, res: NextResponse) {
     });
 
     const message = completion?.choices[0]?.message;
+    const workout = JSON.parse(message?.function_call?.arguments || "{}");
 
-    if (message?.function_call?.arguments) {
-      const workout = JSON.parse(message.function_call.arguments);
-      const validatedWorkout = workoutSchema.parse(workout);
-      return NextResponse.json({ workout: validatedWorkout });
-    } else {
-      return NextResponse.json({ error: "Failed to generate workout" });
-    }
+    const validatedWorkout = workoutSchema.parse(workout);
+    return NextResponse.json({ workout: validatedWorkout });
   } catch (error) {
     console.error(error);
     if (error instanceof z.ZodError) {
@@ -61,10 +57,12 @@ export async function POST(req: Request, res: NextResponse) {
     } else if (error instanceof SyntaxError) {
       return NextResponse.json({
         error: "Invalid JSON in workout generation",
+        details: error.message,
       });
     } else {
       return NextResponse.json({
         error: "An error occurred while generating the workout plan.",
+        details: error,
       });
     }
   }
