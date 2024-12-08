@@ -25,6 +25,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import {
   BookOpenCheck,
   Calendar,
+  CalendarCogIcon,
   ChevronDown,
   Dumbbell,
   Home,
@@ -56,7 +57,13 @@ const data = {
       label: "Schedule",
       href: "/schedule",
       subItems: [
+        { icon: PlusCircle, label: "Create", href: "/schedule/create" },
         { icon: Calendar, label: "Calendar", href: "/schedule/calendar" },
+        {
+          icon: CalendarCogIcon,
+          label: "Weekly",
+          href: "/schedule/weekly-calendar",
+        },
       ],
     },
     {

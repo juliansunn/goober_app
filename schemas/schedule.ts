@@ -34,14 +34,25 @@ const singleIntervalSchema = z.object({
 });
 
 export const intervalSchema = z.object({
-  id: z.number().int(),
-  order: z.number().int(),
+  intervalId: z
+    .number()
+    .int()
+    .describe("The unique identifier of the interval"),
+  order: z.number().int().describe("The order of the interval in the workout"),
+  type: z.literal("interval"),
   interval: singleIntervalSchema,
 });
 
 export const repeatGroupSchema = z.object({
-  id: z.number().int(),
-  order: z.number().int(),
+  repeatGroupId: z
+    .number()
+    .int()
+    .describe("The unique identifier of the repeat group"),
+  order: z
+    .number()
+    .int()
+    .describe("The order of the repeat group in the workout"),
+  type: z.literal("repeatGroup"),
   repeatGroup: z.object({
     intervals: z.array(singleIntervalSchema),
     repeats: z.number().int(),

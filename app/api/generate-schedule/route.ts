@@ -1,11 +1,13 @@
+import { promises as fs } from "fs";
+import path from "path";
+
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import zodToJsonSchema from "zod-to-json-schema";
-import { scheduledWorkoutSchema } from "@/types/schedule";
+import { scheduledWorkoutSchema } from "@/schemas/schedule";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
 
-const openai = new OpenAI({
+const openaiClient = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
@@ -13,76 +15,121 @@ const scheduledWorkoutsSchema = z.object({
   scheduledWorkouts: z.array(scheduledWorkoutSchema),
 });
 
-const scheduledWorkoutsJsonSchema = zodToJsonSchema(
-  scheduledWorkoutsSchema,
-  "scheduledWorkoutsSchema"
-);
-
-const scheduledWorkoutParameters =
-  scheduledWorkoutsJsonSchema?.definitions?.scheduledWorkoutsSchema;
-
-const generateScheduledWorkoutFunction = {
-  name: "generate_scheduled_workout",
-  description: "Generates a scheduled workout plan based on the user's input.",
-  parameters: scheduledWorkoutParameters,
-};
+const MAX_TOKENS = 6000;
 
 export async function POST(req: Request) {
-  const { prompt } = await req.json();
-  const parsedPrompt = JSON.parse(prompt);
-
-  const systemPrompt = `You are an experienced endurance coach specializing in creating personalized workout schedules. Your task is to generate a detailed and structured workout plan in JSON format, based on the user's provided information. The plan should be tailored to their experience level, goals, and race details.
-    Instructions:  
-    Create a workout schedule that starts from the given start date: ${parsedPrompt.startDate} and ends on the specified race date: ${parsedPrompt.raceDate}.
-    The schedule should include between 3-10 workouts per week, incorporating appropriate rest days as specified by the user.
-    Tailor each workout to help the user achieve their goal race pace and finish time for the given distance, based on the provided experience level and any additional notes.  Do not include any rest days in the schedule.
-    Each workout should be designed using the provided workout schema, with the necessary details, including warmups, cooldowns, intensity, distance, time, and type of workout (e.g., interval, tempo, long run).`;
-
   try {
-    const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL_NAME || "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: JSON.stringify(parsedPrompt) },
-      ],
-      functions: [generateScheduledWorkoutFunction],
-      function_call: { name: "generate_scheduled_workout" },
-      response_format: zodResponseFormat(
-        scheduledWorkoutsSchema,
-        "scheduledWorkoutsSchema"
-      ),
-    });
+    const { prompt } = await req.json();
 
-    const message = completion?.choices[0]?.message;
+    // Add error handling for missing prompt
+    if (!prompt) {
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      );
+    }
 
-    if (message?.function_call?.arguments) {
-      const parsedScheduledWorkouts = JSON.parse(
-        message.function_call.arguments
+    const parsedPrompt = JSON.parse(prompt);
+
+    // Load system prompt from file
+    const promptPath = path.join(
+      process.cwd(),
+      "prompts",
+      "schedule",
+      "v0.0.1.txt"
+    );
+
+    // Add error handling for file reading
+    let systemPrompt;
+    try {
+      systemPrompt = await fs.readFile(promptPath, "utf8");
+    } catch (error) {
+      console.error("Error reading prompt file:", error);
+      return NextResponse.json(
+        { error: "Failed to load system prompt" },
+        { status: 500 }
       );
-      const validatedScheduledWorkouts = scheduledWorkoutsSchema.parse(
-        parsedScheduledWorkouts
-      );
-      return NextResponse.json(validatedScheduledWorkouts);
-    } else {
-      return NextResponse.json({
-        error: "Failed to generate workout schedule",
+    }
+
+    const formattedSystemPrompt = systemPrompt
+      .replace("{startDate}", parsedPrompt.startDate)
+      .replace("{startDate}", parsedPrompt.raceDate);
+
+    try {
+      const completion = await openaiClient.beta.chat.completions.parse({
+        model: process.env.OPENAI_MODEL_NAME || "gpt-4o-mini",
+        max_tokens: MAX_TOKENS,
+        messages: [
+          { role: "system", content: formattedSystemPrompt },
+          { role: "user", content: JSON.stringify(parsedPrompt) },
+        ],
+        response_format: zodResponseFormat(
+          scheduledWorkoutsSchema,
+          "scheduledWorkoutsSchema"
+        ),
       });
+
+      const message = completion.choices[0]?.message;
+      if (!message || !message.content) {
+        throw new Error("No response from OpenAI");
+      }
+
+      // Parse and validate the response
+      const parsedResponse = JSON.parse(message.content);
+      const validatedResponse = scheduledWorkoutsSchema.parse(parsedResponse);
+      const renamedParsed = replaceKeys(validatedResponse);
+
+      return NextResponse.json(renamedParsed);
+    } catch (error) {
+      console.error("Schedule generation error:", error);
+
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      } else if (error instanceof SyntaxError) {
+        return NextResponse.json(
+          {
+            error: "Invalid JSON in workout schedule generation",
+            details: error.message,
+          },
+          { status: 400 }
+        );
+      } else {
+        return NextResponse.json(
+          {
+            error: "An error occurred while generating the workout plan.",
+            details: error instanceof Error ? error.message : String(error),
+          },
+          { status: 500 }
+        );
+      }
     }
   } catch (error) {
-    console.error(error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({
-        error: "Validation failed",
-        details: error.errors,
-      });
-    } else if (error instanceof SyntaxError) {
-      return NextResponse.json({
-        error: "Invalid JSON in workout schedule generation",
-      });
-    } else {
-      return NextResponse.json({
-        error: "An error occurred while generating the workout plan.",
-      });
-    }
+    console.error("Schedule generation error:", error);
+    // Make sure to return a response
+    return NextResponse.json(
+      { error: "An error occurred while generating the schedule" },
+      { status: 500 }
+    );
   }
+}
+
+function replaceKeys(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(replaceKeys); // Process each element in the array
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.entries(obj).reduce(
+      (acc, [key, value]) => {
+        // Replace keys "intervalId" and "repeatGroupId" with "id"
+        const newKey =
+          key === "intervalId" || key === "repeatGroupId" ? "id" : key;
+        acc[newKey] = replaceKeys(value); // Recursively process nested objects/arrays
+        return acc;
+      },
+      {} as Record<string, any>
+    );
+  }
+  return obj; // Return primitive values as-is
 }

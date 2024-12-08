@@ -20,7 +20,8 @@ import {
   intervalSchema,
   repeatGroupSchema,
   workoutSchema,
-} from "./schedule";
+} from "../schemas/schedule";
+import { WorkoutSkeleton } from "./skeleton";
 export type {
   CalendarItem,
   ScheduledWorkout,
@@ -42,4 +43,5 @@ export type {
   IntensityType,
   WorkoutItem,
   RepeatGroup,
+  WorkoutSkeleton,
 };
