@@ -1,5 +1,6 @@
 import {
   DurationType,
+  DurationUnit,
   IntensityType,
   Interval,
   IntervalType,
@@ -15,7 +16,6 @@ import {
 } from "../ui/select";
 import { Input } from "../ui/input";
 import { X } from "lucide-react";
-import { useTheme } from "next-themes";
 
 const DurationSelector = ({
   durationType,
@@ -25,8 +25,8 @@ const DurationSelector = ({
 }: {
   durationType: DurationType;
   durationValue: number;
-  durationUnit: string;
-  onChange: (type: DurationType, value: number, unit: string) => void;
+  durationUnit: DurationUnit;
+  onChange: (type: DurationType, value: number, unit: DurationUnit) => void;
 }) => {
   return (
     <div className="grid gap-2">
@@ -58,7 +58,7 @@ const DurationSelector = ({
         />
         <Select
           value={durationUnit}
-          onValueChange={(value: string) =>
+          onValueChange={(value: DurationUnit) =>
             onChange(durationType, durationValue, value)
           }
         >
@@ -109,16 +109,16 @@ const IntensityTargetSelector = ({
     intensityType === IntensityType.CADENCE
       ? "rpm"
       : intensityType === IntensityType.HEART_RATE
-      ? "bpm"
-      : intensityType === IntensityType.POWER
-      ? "watts"
-      : intensityType === IntensityType.PACE_MILE
-      ? "min/mile"
-      : intensityType === IntensityType.PACE_KM
-      ? "min/km"
-      : intensityType === IntensityType.PACE_400M
-      ? "sec/400m"
-      : "";
+        ? "bpm"
+        : intensityType === IntensityType.POWER
+          ? "watts"
+          : intensityType === IntensityType.PACE_MILE
+            ? "min/mile"
+            : intensityType === IntensityType.PACE_KM
+              ? "min/km"
+              : intensityType === IntensityType.PACE_400M
+                ? "sec/400m"
+                : "";
 
   return (
     <div className="grid gap-2">
