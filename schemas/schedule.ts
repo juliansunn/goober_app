@@ -5,6 +5,7 @@ import {
   WorkoutType,
   DurationType,
   IntensityType,
+  DurationUnit,
 } from "@/types/workouts";
 
 // Define Zod schemas for enums
@@ -17,6 +18,9 @@ export const WorkoutTypeSchema = z.enum(
 export const DurationTypeSchema = z.enum(
   Object.values(DurationType) as [DurationType, ...DurationType[]]
 );
+export const DurationUnitSchema = z.enum(
+  Object.values(DurationUnit) as [DurationUnit, ...DurationUnit[]]
+);
 export const IntensityTypeSchema = z.enum(
   Object.values(IntensityType) as [IntensityType, ...IntensityType[]]
 );
@@ -27,7 +31,7 @@ const singleIntervalSchema = z.object({
   type: IntervalTypeSchema,
   durationType: DurationTypeSchema,
   durationValue: z.number(),
-  durationUnit: z.string(),
+  durationUnit: DurationUnitSchema,
   intensityType: IntensityTypeSchema,
   intensityMin: z.string(),
   intensityMax: z.string(),

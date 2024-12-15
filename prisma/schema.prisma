@@ -122,7 +122,7 @@ model Interval {
   type          IntervalType
   durationType  DurationType
   durationValue Float
-  durationUnit  String
+  durationUnit  DurationUnit
   intensityType IntensityType
   intensityMin  String?
   intensityMax  String?
@@ -196,6 +196,17 @@ enum DurationType {
   TIME
   DISTANCE
   HEART_RATE
+  CALORIES
+}
+
+enum DurationUnit {
+  SECONDS
+  MINUTES
+  HOURS
+  METERS
+  KILOMETERS
+  MILES
+  BPM
   CALORIES
 }
 

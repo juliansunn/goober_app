@@ -2,6 +2,7 @@ import {
   IntervalType as PrismaIntervalType,
   WorkoutType as PrismaWorkoutType,
   DurationType as PrismaDurationType,
+  DurationUnit as PrismaDurationUnit,
   IntensityType as PrismaIntensityType,
 } from "@prisma/client";
 
@@ -16,6 +17,9 @@ export type DurationType = (typeof DurationType)[keyof typeof DurationType];
 
 export const IntensityType = PrismaIntensityType;
 export type IntensityType = (typeof IntensityType)[keyof typeof IntensityType];
+
+export const DurationUnit = PrismaDurationUnit;
+export type DurationUnit = (typeof DurationUnit)[keyof typeof DurationUnit];
 
 export interface User {
   id: number;
