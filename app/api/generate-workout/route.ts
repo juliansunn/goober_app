@@ -2,55 +2,61 @@
 
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { promises as fs } from "fs";
+
 import z from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { workoutSchema } from "@/types/schedule";
+import { workoutSchema } from "@/schemas/schedule";
+import path from "path";
+import { replaceKeys } from "@/lib/workout-utils";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const workoutJsonSchema = zodToJsonSchema(workoutSchema, "workoutSchema");
-
-const workoutParameters = workoutJsonSchema?.definitions?.workoutSchema;
-
-const generateWorkoutFunction = {
-  name: "generate_workout",
-  description: "Generates a workout plan based on the user prompt.",
-  parameters: workoutParameters,
-};
-
 export async function POST(req: Request, res: NextResponse) {
   const { prompt } = await req.json();
 
   try {
-    const systemPrompt = `
-      You are a seasoned endurance coach with significant experience in running, biking, swimming, and triathlon. Generate a workout based on the user's prompt, and output it in the following JSON schema without deviation.
-      Please use the RepeatGroup resource in favor of listing intervals when building a workout that has repeated intervals.  Pay close attention to the type of workous one is initially requesting, and pick between the types of available workouts in the Workout type enum.
-      You should also give a detailed description of the workout, and include detials on how the user should prepare for the workokut mentally and physically.  You should also include how to best execute the workout.  Include additional information regarding form and fueling techniques.  This field is a markdown field, so use it to your advantage to format your response.
-      `;
+    const promptPath = path.join(
+      process.cwd(),
+      "prompts",
+      "workout",
+      "v0.0.1.txt"
+    );
 
-    const completion = await openai.chat.completions.create({
+    // Add error handling for file reading
+    let systemPrompt;
+    try {
+      systemPrompt = await fs.readFile(promptPath, "utf8");
+    } catch (error) {
+      console.error("Error reading prompt file:", error);
+      return NextResponse.json(
+        { error: "Failed to load system prompt" },
+        { status: 500 }
+      );
+    }
+
+    const completion = await openai.beta.chat.completions.parse({
       model: process.env.OPENAI_MODEL_NAME || "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt },
       ],
-      functions: [generateWorkoutFunction],
-      function_call: { name: "generate_workout" },
       response_format: zodResponseFormat(workoutSchema, "workoutSchema"),
     });
 
-    const message = completion?.choices[0]?.message;
-
-    if (message?.function_call?.arguments) {
-      const workout = JSON.parse(message.function_call.arguments);
-      const validatedWorkout = workoutSchema.parse(workout);
-      return NextResponse.json({ workout: validatedWorkout });
-    } else {
-      return NextResponse.json({ error: "Failed to generate workout" });
+    const message = completion.choices[0]?.message;
+    if (!message || !message.content) {
+      throw new Error("No response from OpenAI");
     }
+
+    // Parse and validate the response
+    const validatedWorkout = JSON.parse(message.content);
+    const renamedParsed = replaceKeys(validatedWorkout);
+
+    return NextResponse.json({ workout: renamedParsed });
   } catch (error) {
     console.error(error);
     if (error instanceof z.ZodError) {
@@ -61,10 +67,12 @@ export async function POST(req: Request, res: NextResponse) {
     } else if (error instanceof SyntaxError) {
       return NextResponse.json({
         error: "Invalid JSON in workout generation",
+        details: error.message,
       });
     } else {
       return NextResponse.json({
         error: "An error occurred while generating the workout plan.",
+        details: error,
       });
     }
   }

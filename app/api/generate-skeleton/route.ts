@@ -1,19 +1,11 @@
-import { promises as fs } from "fs";
-import path from "path";
-
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { scheduledWorkoutSchema } from "@/schemas/schedule";
+import { workoutSkeletonSchema } from "@/schemas/skeleton";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-import { replaceKeys } from "@/lib/workout-utils";
 
-const openaiClient = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
-
-const scheduledWorkoutsSchema = z.object({
-  scheduledWorkouts: z.array(scheduledWorkoutSchema),
 });
 
 const MAX_TOKENS = 6000;
@@ -21,7 +13,6 @@ const MAX_TOKENS = 6000;
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
-    // Add error handling for missing prompt
     if (!prompt) {
       return NextResponse.json(
         { error: "Prompt is required" },
@@ -31,41 +22,35 @@ export async function POST(req: Request) {
 
     const parsedPrompt = JSON.parse(prompt);
 
-    // Load system prompt from file
-    const promptPath = path.join(
-      process.cwd(),
-      "prompts",
-      "schedule",
-      "v0.0.1.txt"
-    );
+    const systemPrompt = `You are an experienced endurance coach specializing in creating personalized training plans. Your task is to generate a high-level training plan skeleton in JSON format, based on the user's provided information. The plan should be tailored to their experience level, goals, and race details.
 
-    // Add error handling for file reading
-    let systemPrompt;
-    try {
-      systemPrompt = await fs.readFile(promptPath, "utf8");
-    } catch (error) {
-      console.error("Error reading prompt file:", error);
-      return NextResponse.json(
-        { error: "Failed to load system prompt" },
-        { status: 500 }
-      );
-    }
-
-    const formattedSystemPrompt = systemPrompt
-      .replace("{startDate}", parsedPrompt.startDate)
-      .replace("{startDate}", parsedPrompt.raceDate);
+    Instructions:
+    1. Create a training plan that starts from ${parsedPrompt.startDate} and ends on ${parsedPrompt.raceDate}.
+    2. Divide the training period into appropriate phases (Base, Build, Peak, Taper).
+    3. For each phase:
+       - Define clear objectives
+       - Break down into weeks
+       - Specify weekly focus and intensity distribution
+       - Create placeholder workouts (3-6 per week)
+    4. Consider the user's:
+       - Experience level: ${parsedPrompt.experienceLevel}
+       - Race type: ${parsedPrompt.raceType}
+       - Race distance: ${parsedPrompt.raceDistance}
+       - Goal time: ${parsedPrompt.goalTime || "Not specified"}
+    
+    The schedule should follow proper periodization principles and gradually build intensity and volume appropriate to the user's level and goals.`;
 
     try {
-      const completion = await openaiClient.beta.chat.completions.parse({
+      const completion = await openai.beta.chat.completions.parse({
         model: process.env.OPENAI_MODEL_NAME || "gpt-4o-mini",
         max_tokens: MAX_TOKENS,
         messages: [
-          { role: "system", content: formattedSystemPrompt },
+          { role: "system", content: systemPrompt },
           { role: "user", content: JSON.stringify(parsedPrompt) },
         ],
         response_format: zodResponseFormat(
-          scheduledWorkoutsSchema,
-          "scheduledWorkoutsSchema"
+          workoutSkeletonSchema,
+          "workoutSkeletonSchema"
         ),
       });
 
@@ -74,12 +59,10 @@ export async function POST(req: Request) {
         throw new Error("No response from OpenAI");
       }
 
-      // Parse and validate the response
       const parsedResponse = JSON.parse(message.content);
-      const validatedResponse = scheduledWorkoutsSchema.parse(parsedResponse);
-      const renamedParsed = replaceKeys(validatedResponse);
+      const validatedResponse = workoutSkeletonSchema.parse(parsedResponse);
 
-      return NextResponse.json(renamedParsed);
+      return NextResponse.json(validatedResponse);
     } catch (error) {
       console.error("Schedule generation error:", error);
 
@@ -108,9 +91,8 @@ export async function POST(req: Request) {
     }
   } catch (error) {
     console.error("Schedule generation error:", error);
-    // Make sure to return a response
     return NextResponse.json(
-      { error: "An error occurred while generating the schedule" },
+      { error: "An error occurred while processing the request" },
       { status: 500 }
     );
   }

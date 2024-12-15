@@ -27,13 +27,18 @@ import {
   StravaActivity,
   Workout,
   WorkoutItem,
+  WorkoutSkeleton,
 } from "@/types";
+import { DurationUnit } from "@/types/workouts";
 
 // Add this type definition
 type GeneratedScheduledWorkout = ScheduledWorkout & { notes: string };
 
 type WorkoutContextType = {
   generatedScheduledWorkouts: GeneratedScheduledWorkout[];
+  setGeneratedScheduledWorkouts: React.Dispatch<
+    React.SetStateAction<GeneratedScheduledWorkout[]>
+  >;
   generateSchedule: (formData: any) => Promise<void>;
   isLoadingScheduledWorkouts: boolean;
   scheduledWorkouts: ScheduledWorkout[] | undefined;
@@ -72,6 +77,8 @@ type WorkoutContextType = {
   reorderWorkoutItems: (newOrder: WorkoutItem[]) => void;
   setIsEditing: (isEditing: boolean) => void;
   initializeWorkout: (existingWorkout: Workout | null) => void;
+  skeleton: WorkoutSkeleton | null;
+  generateSkeleton: (formData: any) => Promise<void>;
 };
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -88,7 +95,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingCreateOrUpdateWorkout, setIsLoadingCreateOrUpdateWorkout] =
     useState(false);
   const perPage = 50;
-
+  const [skeleton, setSkeleton] = useState<WorkoutSkeleton | null>(null);
   const {
     data: scheduledWorkouts,
     isLoading: isLoadingWorkouts,
@@ -159,17 +166,38 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate workout schedule");
+        const errorText = await response.text();
+        throw new Error(`Failed to generate workout schedule: ${errorText}`);
       }
 
       const data = await response.json();
       setGeneratedScheduledWorkouts(data?.scheduledWorkouts || []);
     } catch (error) {
       console.error("Error generating workout schedule:", error);
-      // Handle error (e.g., show an error message to the user)
+      toast.error("Failed to generate workout schedule");
     } finally {
       setIsLoadingScheduledWorkouts(false);
     }
+  }, []);
+
+  const generateSkeleton = useCallback(async (formData: any) => {
+    // TODO: Remove this hardcoded prompt
+    const prompt = {
+      prompt:
+        '{"scheduleTitle":"Napa Valley Marathon Training","startDate":"2024-12-03","raceName":"Napa Valley Marathon","raceType":"running","raceDistance":"Marathon","customDistance":"","customDistanceUnit":"","raceDate":"2025-02-02","restDay":"monday","experienceLevel":"advanced","goalTimeHours":"2","goalTimeMinutes":"34","goalTimeSeconds":"00","additionalNotes":"I like it when weekends have two fairly long runs with the first usually being a workout.  Then on Monday, I would have a day off to recover from a long weekend of working out.","goalTime":"02:34:00"}',
+    };
+    const response = await fetch("/api/generate-skeleton", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(prompt),
+    });
+    if (!response.ok) {
+      throw new Error("Failed to generate workout skeleton");
+    }
+
+    setSkeleton(await response.json());
   }, []);
 
   const setDateRange = useCallback(
@@ -273,7 +301,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     type: IntervalType.ACTIVE,
     durationType: DurationType.TIME,
     durationValue: 0,
-    durationUnit: "minutes",
+    durationUnit: DurationUnit.MINUTES,
     intensityType: IntensityType.NONE,
     intensityMin: "",
     intensityMax: "",
@@ -320,7 +348,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           type: IntervalType.ACTIVE,
           durationType: DurationType.TIME,
           durationValue: 0,
-          durationUnit: "minutes",
+          durationUnit: DurationUnit.MINUTES,
           intensityType: IntensityType.NONE,
           intensityMin: "",
           intensityMax: "",
@@ -382,6 +410,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     <WorkoutContext.Provider
       value={{
         generatedScheduledWorkouts,
+        setGeneratedScheduledWorkouts,
         generateSchedule,
         isLoadingScheduledWorkouts,
         scheduledWorkouts,
@@ -399,7 +428,6 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         isLoadingCreateOrUpdateWorkout,
         builderWorkout,
         setBuilderWorkout,
-        isEditing,
         editingItem,
         setEditingItem,
         newInterval,
@@ -411,8 +439,11 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         removeWorkoutItem,
         updateWorkoutItem,
         reorderWorkoutItems,
+        isEditing,
         setIsEditing,
         initializeWorkout,
+        skeleton,
+        generateSkeleton,
       }}
     >
       {children}

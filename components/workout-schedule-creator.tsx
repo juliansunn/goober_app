@@ -13,15 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
+import { DatePicker } from "@/components/ui/date-picker";
+import { WorkoutSkeleton } from "./WorkoutSkeleton";
+import { CreateSkeletonForm } from "./CreateSkeletonForm";
 
 type DistanceOption = {
   label: string;
@@ -59,28 +55,24 @@ const raceDistances: Record<string, DistanceOption[]> = {
 };
 
 export function WorkoutScheduleCreatorComponent() {
-  const {
-    generateSchedule,
-    generatedScheduledWorkouts,
-    isLoadingScheduledWorkouts,
-  } = useWorkout();
-  const [isOpen, setIsOpen] = useState(false);
+  const { isLoadingScheduledWorkouts, skeleton, generateSkeleton } =
+    useWorkout();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     scheduleTitle: "",
-    startDate: new Date().toISOString().split("T")[0],
+    startDate: new Date(),
     raceName: "",
     raceType: "",
     raceDistance: "",
     customDistance: "",
     customDistanceUnit: "",
-    raceDate: "",
+    raceDate: new Date(),
     restDay: "",
     experienceLevel: "",
     goalTimeHours: "",
     goalTimeMinutes: "",
     goalTimeSeconds: "",
-    additionalNotes: "", // Add this new field
+    additionalNotes: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCustomDistance, setShowCustomDistance] = useState(false);
@@ -174,59 +166,14 @@ export function WorkoutScheduleCreatorComponent() {
         goalTime,
       };
 
-      // Keep the dialog open during submission
-      setIsOpen(true);
-      await generateSchedule(submissionData);
-      // The dialog will remain open after generation
-    }
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    // Only allow closing if not loading and no generated workouts
-    if (
-      !isLoadingScheduledWorkouts &&
-      (!generatedScheduledWorkouts || generatedScheduledWorkouts.length === 0)
-    ) {
-      setIsOpen(open);
-      if (!open) {
-        // Reset the form when the dialog is closed
-        setStep(0);
-        setFormData({
-          scheduleTitle: "",
-          startDate: new Date().toISOString().split("T")[0],
-          raceName: "",
-          raceType: "",
-          raceDistance: "",
-          customDistance: "",
-          customDistanceUnit: "",
-          raceDate: "",
-          restDay: "",
-          experienceLevel: "",
-          goalTimeHours: "",
-          goalTimeMinutes: "",
-          goalTimeSeconds: "",
-          additionalNotes: "",
-        });
-        setErrors({});
-      }
-    } else {
-      // Keep the dialog open if loading or if there are generated workouts
-      setIsOpen(true);
+      await generateSkeleton(submissionData);
     }
   };
 
   const renderResult = () => {
-    if (!generatedScheduledWorkouts) return null;
+    if (!skeleton) return <CreateSkeletonForm onSubmit={() => {}} />;
 
-    return (
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Generated Workout Schedule</h3>
-        <pre className="bg-gray-100 p-4 rounded-md overflow-auto">
-          {JSON.stringify(generatedScheduledWorkouts, null, 2)}
-        </pre>
-        <Button onClick={() => handleOpenChange(false)}>Close</Button>
-      </div>
-    );
+    return <WorkoutSkeleton skeletonData={skeleton} />;
   };
 
   const renderQuestion = () => {
@@ -239,14 +186,12 @@ export function WorkoutScheduleCreatorComponent() {
       );
     }
 
-    if (generatedScheduledWorkouts && generatedScheduledWorkouts.length > 0) {
+    if (skeleton) {
       return renderResult();
     }
 
     switch (step) {
       case 0:
-        return <Button onClick={() => setStep(1)}>Start Questionnaire</Button>;
-      case 1:
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Race Details</h3>
@@ -268,12 +213,15 @@ export function WorkoutScheduleCreatorComponent() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                name="startDate"
-                type="date"
-                value={formData.startDate}
-                onChange={handleInputChange}
+              <DatePicker
+                date={formData.startDate}
+                onDateChange={(date) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    startDate: date || new Date(),
+                  }))
+                }
+                placeholder="Select start date"
               />
             </div>
             <div className="space-y-2">
@@ -383,13 +331,15 @@ export function WorkoutScheduleCreatorComponent() {
             )}
             <div className="space-y-2">
               <Label htmlFor="raceDate">Race Date</Label>
-              <Input
-                id="raceDate"
-                name="raceDate"
-                type="date"
-                value={formData.raceDate}
-                onChange={handleInputChange}
-                required
+              <DatePicker
+                date={formData.raceDate}
+                onDateChange={(date) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    raceDate: date || new Date(),
+                  }))
+                }
+                placeholder="Select race date"
               />
               {errors.raceDate && (
                 <Alert variant="destructive">
@@ -405,7 +355,7 @@ export function WorkoutScheduleCreatorComponent() {
             </div>
           </div>
         );
-      case 2:
+      case 1:
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Training Preferences</h3>
@@ -535,35 +485,5 @@ export function WorkoutScheduleCreatorComponent() {
     }
   };
 
-  return (
-    <Dialog
-      open={isOpen || isLoadingScheduledWorkouts}
-      onOpenChange={handleOpenChange}
-    >
-      <DialogTrigger asChild>
-        <Button>Create Workout Schedule</Button>
-      </DialogTrigger>
-      <DialogContent
-        className="sm:max-w-[425px]"
-        aria-describedby="workout-schedule-creator"
-      >
-        <DialogHeader>
-          <DialogTitle>Create Workout Schedule</DialogTitle>
-        </DialogHeader>
-        <div className="mt-4">
-          {isLoadingScheduledWorkouts ? (
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <p>Generating your workout schedule...</p>
-            </div>
-          ) : generatedScheduledWorkouts &&
-            generatedScheduledWorkouts.length > 0 ? (
-            renderResult()
-          ) : (
-            renderQuestion()
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  return <div className="w-full max-w-2xl mx-auto">{renderQuestion()}</div>;
 }

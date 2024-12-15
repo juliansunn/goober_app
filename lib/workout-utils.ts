@@ -33,22 +33,20 @@ export const getIntervalTextColor = (intervalType: IntervalType) => {
   }
 };
 
-// export const formatIntensityTarget = (intensityTarget: IntensityType) => {
-//   if (intensityTarget.type === IntensityType.NONE) return "None";
-//   const { type, min, max } = intensityTarget;
-//   const unit =
-//     type === IntensityType.CADENCE
-//       ? "rpm"
-//       : type === IntensityType.HEART_RATE
-//       ? "bpm"
-//       : type === IntensityType.POWER
-//       ? "watts"
-//       : type === IntensityType.PACE_MILE
-//       ? "min/mile"
-//       : type === IntensityType.PACE_KM
-//       ? "min/km"
-//       : "sec/400m";
-//   return `${
-//     type.charAt(0).toUpperCase() + type.slice(1)
-//   }: [${min}] to [${max}] ${unit}`;
-// };
+export function replaceKeys(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(replaceKeys); // Process each element in the array
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.entries(obj).reduce(
+      (acc, [key, value]) => {
+        // Replace keys "intervalId" and "repeatGroupId" with "id"
+        const newKey =
+          key === "intervalId" || key === "repeatGroupId" ? "id" : key;
+        acc[newKey] = replaceKeys(value); // Recursively process nested objects/arrays
+        return acc;
+      },
+      {} as Record<string, any>
+    );
+  }
+  return obj; // Return primitive values as-is
+}

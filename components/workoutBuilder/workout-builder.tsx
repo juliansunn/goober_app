@@ -22,7 +22,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Reorder } from "framer-motion";
 import { Loader2, PlusCircle } from "lucide-react";
 import {
   Form,
@@ -32,7 +31,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import IntervalItem from "./interval-item";
 import { getIntervalColor } from "@/lib/workout-utils";
 import IntervalForm from "../forms/interval-form";
 import { useTheme } from "next-themes";
@@ -45,6 +43,7 @@ import {
 } from "@/schemas/workout-schema";
 import {
   DurationType,
+  DurationUnit,
   IntensityType,
   IntervalType,
   Workout,
@@ -80,10 +79,8 @@ export function WorkoutBuilder({
     addWorkoutItem,
     removeWorkoutItem,
     updateWorkoutItem,
-    reorderWorkoutItems,
     createOrUpdateWorkout,
     isLoadingCreateOrUpdateWorkout: isLoading,
-    setIsEditing,
     initializeWorkout,
   } = useWorkout();
 
@@ -321,7 +318,7 @@ export function WorkoutBuilder({
                     type: IntervalType.ACTIVE,
                     durationType: DurationType.TIME,
                     durationValue: 0,
-                    durationUnit: "minutes",
+                    durationUnit: DurationUnit.MINUTES,
                     intensityType: IntensityType.NONE,
                     intensityMin: "",
                     intensityMax: "",
@@ -350,8 +347,8 @@ export function WorkoutBuilder({
                       ? "Edit Repeat Group"
                       : "Edit Interval"
                     : isRepeatMode
-                    ? "Add New Repeat"
-                    : "Add New Interval"}
+                      ? "Add New Repeat"
+                      : "Add New Interval"}
                 </DialogTitle>
               </DialogHeader>
               <ScrollArea className="max-h-[60vh] pr-4">
@@ -402,7 +399,7 @@ export function WorkoutBuilder({
                           type: IntervalType.ACTIVE,
                           durationType: DurationType.TIME,
                           durationValue: 0,
-                          durationUnit: "minutes",
+                          durationUnit: DurationUnit.MINUTES,
                           intensityType: IntensityType.NONE,
                           intensityMin: "",
                           intensityMax: "",
@@ -451,8 +448,8 @@ export function WorkoutBuilder({
                   {editingItem
                     ? "Update"
                     : isRepeatMode
-                    ? "Add Repeat"
-                    : "Add Interval"}
+                      ? "Add Repeat"
+                      : "Add Interval"}
                 </Button>
               </div>
             </DialogContent>
