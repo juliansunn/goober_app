@@ -9,20 +9,11 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { workoutSchema } from "@/schemas/schedule";
 import path from "path";
+import { replaceKeys } from "@/lib/workout-utils";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-const workoutJsonSchema = zodToJsonSchema(workoutSchema, "workoutSchema");
-
-const workoutParameters = workoutJsonSchema?.definitions?.workoutSchema;
-
-const generateWorkoutFunction = {
-  name: "generate_workout",
-  description: "Generates a workout plan based on the user prompt.",
-  parameters: workoutParameters,
-};
 
 export async function POST(req: Request, res: NextResponse) {
   const { prompt } = await req.json();
@@ -47,22 +38,25 @@ export async function POST(req: Request, res: NextResponse) {
       );
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await openai.beta.chat.completions.parse({
       model: process.env.OPENAI_MODEL_NAME || "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt },
       ],
-      functions: [generateWorkoutFunction],
-      function_call: { name: "generate_workout" },
       response_format: zodResponseFormat(workoutSchema, "workoutSchema"),
     });
 
-    const message = completion?.choices[0]?.message;
-    const workout = JSON.parse(message?.function_call?.arguments || "{}");
+    const message = completion.choices[0]?.message;
+    if (!message || !message.content) {
+      throw new Error("No response from OpenAI");
+    }
 
-    const validatedWorkout = workoutSchema.parse(workout);
-    return NextResponse.json({ workout: validatedWorkout });
+    // Parse and validate the response
+    const validatedWorkout = JSON.parse(message.content);
+    const renamedParsed = replaceKeys(validatedWorkout);
+
+    return NextResponse.json({ workout: renamedParsed });
   } catch (error) {
     console.error(error);
     if (error instanceof z.ZodError) {

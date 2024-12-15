@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { scheduledWorkoutSchema } from "@/schemas/schedule";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
+import { replaceKeys } from "@/lib/workout-utils";
 
 const openaiClient = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -20,7 +21,6 @@ const MAX_TOKENS = 6000;
 export async function POST(req: Request) {
   try {
     const { prompt } = await req.json();
-
     // Add error handling for missing prompt
     if (!prompt) {
       return NextResponse.json(
@@ -114,22 +114,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-}
-
-function replaceKeys(obj: any): any {
-  if (Array.isArray(obj)) {
-    return obj.map(replaceKeys); // Process each element in the array
-  } else if (obj !== null && typeof obj === "object") {
-    return Object.entries(obj).reduce(
-      (acc, [key, value]) => {
-        // Replace keys "intervalId" and "repeatGroupId" with "id"
-        const newKey =
-          key === "intervalId" || key === "repeatGroupId" ? "id" : key;
-        acc[newKey] = replaceKeys(value); // Recursively process nested objects/arrays
-        return acc;
-      },
-      {} as Record<string, any>
-    );
-  }
-  return obj; // Return primitive values as-is
 }
