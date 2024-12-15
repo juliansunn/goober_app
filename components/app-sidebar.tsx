@@ -57,6 +57,7 @@ const data = {
       label: "Schedule",
       href: "/schedule",
       subItems: [
+        { icon: Calendar, label: "All Schedules", href: "/schedules/all" },
         { icon: PlusCircle, label: "Create", href: "/schedule/create" },
         { icon: Calendar, label: "Calendar", href: "/schedule/calendar" },
         {
@@ -154,13 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {item.subItems ? (
                 <Collapsible>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      className={cn(
-                        "w-full justify-between",
-                        isActive(item.href) &&
-                          "bg-accent text-accent-foreground"
-                      )}
-                    >
+                    <SidebarMenuButton className="w-full justify-between">
                       <div className="flex items-center space-x-2">
                         <item.icon className="h-5 w-5" />
                         <span>{item.label}</span>
