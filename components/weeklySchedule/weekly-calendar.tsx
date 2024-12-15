@@ -13,20 +13,35 @@ import {
 import { format } from "date-fns";
 import { getWeekDates } from "@/utils/date-utils";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
+import { WorkoutSkeleton } from "@/types";
 
 interface WorkoutWeeklyCalendarProps {
   handlePrevWeek: (date: Date) => void;
   handleNextWeek: (date: Date) => void;
 }
 
+const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
+  return skeleton?.schedule.phases.find((phase) => {
+    return phase.weeks.find((week) => {
+      return week.startDate === date.toISOString();
+    });
+  });
+};
+
 export function WorkoutWeeklyCalendar({
   handlePrevWeek,
   handleNextWeek,
 }: WorkoutWeeklyCalendarProps) {
-  const { skeleton, generateSkeleton } = useWorkout();
-  console.log("skeleton", skeleton);
+  const { skeleton, generateSchedule } = useWorkout();
   const today = new Date().toISOString();
   const weekDates = getWeekDates(today);
+
+  const handleGenerateWorkouts = () => {
+    if (!skeleton) return;
+    const phaseAndWeek = findPhaseAndWeekForDate(skeleton, weekDates[0]);
+    if (!phaseAndWeek) return;
+    generateSchedule(phaseAndWeek);
+  };
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -73,7 +88,7 @@ export function WorkoutWeeklyCalendar({
             {skeleton?.schedule.phases[0].weeks[0].volumeValue}
           </p>
         </div>
-        <Button onClick={generateSkeleton}>Generate Workouts</Button>
+        <Button onClick={handleGenerateWorkouts}>Generate Workouts</Button>
       </CardFooter>
     </Card>
   );

@@ -346,8 +346,8 @@ export function WorkoutBuilder({
                       ? "Edit Repeat Group"
                       : "Edit Interval"
                     : isRepeatMode
-                    ? "Add New Repeat"
-                    : "Add New Interval"}
+                      ? "Add New Repeat"
+                      : "Add New Interval"}
                 </DialogTitle>
               </DialogHeader>
               <ScrollArea className="max-h-[60vh] pr-4">
@@ -447,8 +447,8 @@ export function WorkoutBuilder({
                   {editingItem
                     ? "Update"
                     : isRepeatMode
-                    ? "Add Repeat"
-                    : "Add Interval"}
+                      ? "Add Repeat"
+                      : "Add Interval"}
                 </Button>
               </div>
             </DialogContent>

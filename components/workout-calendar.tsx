@@ -6,11 +6,7 @@ import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
-import {
-  GeneratedScheduledWorkout,
-  ScheduledWorkout,
-  Workout,
-} from "@/types/workouts";
+import { ScheduledWorkout, Workout } from "@/types/workouts";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
@@ -267,15 +263,15 @@ export function WorkoutCalendarComponent({
       "scheduledAt" in item.item
         ? item.item.scheduledAt
         : "start_date" in item.item
-        ? item.item.start_date
-        : new Date()
+          ? item.item.start_date
+          : new Date()
     ),
     end: new Date(
       "scheduledAt" in item.item
         ? item.item.scheduledAt
         : "start_date" in item.item
-        ? item.item.start_date
-        : new Date()
+          ? item.item.start_date
+          : new Date()
     ),
     itemType: item.itemType,
     item: item.item,

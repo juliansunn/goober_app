@@ -11,7 +11,6 @@ const Explore = () => {
   const [prompt, setPrompt] = useState("");
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  console.log("prompt", prompt);
 
   const handleGenerateWorkout = async () => {
     setIsLoading(true);

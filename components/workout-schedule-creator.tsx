@@ -15,8 +15,9 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
-import { ScrollArea } from "./ui/scroll-area";
 import { DatePicker } from "@/components/ui/date-picker";
+import { WorkoutSkeleton } from "./WorkoutSkeleton";
+import { CreateSkeletonForm } from "./CreateSkeletonForm";
 
 type DistanceOption = {
   label: string;
@@ -54,12 +55,8 @@ const raceDistances: Record<string, DistanceOption[]> = {
 };
 
 export function WorkoutScheduleCreatorComponent() {
-  const {
-    generateSchedule,
-    generatedScheduledWorkouts,
-    isLoadingScheduledWorkouts,
-    setGeneratedScheduledWorkouts,
-  } = useWorkout();
+  const { isLoadingScheduledWorkouts, skeleton, generateSkeleton } =
+    useWorkout();
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     scheduleTitle: "",
@@ -169,69 +166,14 @@ export function WorkoutScheduleCreatorComponent() {
         goalTime,
       };
 
-      await generateSchedule(submissionData);
+      await generateSkeleton(submissionData);
     }
   };
 
   const renderResult = () => {
-    if (!generatedScheduledWorkouts) return null;
+    if (!skeleton) return <CreateSkeletonForm onSubmit={() => {}} />;
 
-    return (
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Generated Workout Schedule</h3>
-        <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-          <div className="space-y-4">
-            {generatedScheduledWorkouts.map((workout, index) => (
-              <div key={index} className="space-y-2">
-                <h4 className="font-medium">Workout {index + 1}</h4>
-                <div className="rounded-lg bg-gray-100 p-4">
-                  <p>
-                    <strong>Date:</strong>{" "}
-                    {new Date(workout.scheduledAt).toLocaleDateString()}
-                  </p>
-                  <p>
-                    <strong>Title:</strong> {workout.workout.title}
-                  </p>
-                  <p>
-                    <strong>Type:</strong> {workout.workout.type}
-                  </p>
-                  <p>
-                    <strong>Notes:</strong> {workout.notes}
-                  </p>
-                  <div className="mt-2">
-                    <strong>Description:</strong>
-                    <p className="whitespace-pre-wrap">
-                      {workout.workout.description}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-        <div className="flex justify-end space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setGeneratedScheduledWorkouts([]);
-              setStep(1);
-            }}
-          >
-            Update Questionnaire
-          </Button>
-          <Button variant="secondary" onClick={(e) => handleSubmit(e)}>
-            Regenerate
-          </Button>
-          <Button
-            onClick={() => {
-              console.log("saving");
-            }}
-          >
-            Save Schedule
-          </Button>
-        </div>
-      </div>
-    );
+    return <WorkoutSkeleton skeletonData={skeleton} />;
   };
 
   const renderQuestion = () => {
@@ -244,20 +186,12 @@ export function WorkoutScheduleCreatorComponent() {
       );
     }
 
-    if (generatedScheduledWorkouts && generatedScheduledWorkouts.length > 0) {
+    if (skeleton) {
       return renderResult();
     }
 
     switch (step) {
       case 0:
-        return (
-          <div className="flex flex-col items-center justify-center">
-            <Button onClick={() => setStep(1)} size="lg">
-              Create New Schedule
-            </Button>
-          </div>
-        );
-      case 1:
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Race Details</h3>
@@ -421,7 +355,7 @@ export function WorkoutScheduleCreatorComponent() {
             </div>
           </div>
         );
-      case 2:
+      case 1:
         return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold">Training Preferences</h3>
