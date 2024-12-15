@@ -43,6 +43,7 @@ import {
 } from "@/schemas/workout-schema";
 import {
   DurationType,
+  DurationUnit,
   IntensityType,
   IntervalType,
   Workout,
@@ -317,7 +318,7 @@ export function WorkoutBuilder({
                     type: IntervalType.ACTIVE,
                     durationType: DurationType.TIME,
                     durationValue: 0,
-                    durationUnit: "minutes",
+                    durationUnit: DurationUnit.MINUTES,
                     intensityType: IntensityType.NONE,
                     intensityMin: "",
                     intensityMax: "",
@@ -398,7 +399,7 @@ export function WorkoutBuilder({
                           type: IntervalType.ACTIVE,
                           durationType: DurationType.TIME,
                           durationValue: 0,
-                          durationUnit: "MINUTES",
+                          durationUnit: DurationUnit.MINUTES,
                           intensityType: IntensityType.NONE,
                           intensityMin: "",
                           intensityMax: "",

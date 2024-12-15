@@ -36,7 +36,7 @@ export type Interval = {
   type: IntervalType;
   durationType: DurationType;
   durationValue: number;
-  durationUnit: string;
+  durationUnit: DurationUnit;
   intensityType: IntensityType;
   intensityMin: string;
   intensityMax: string;

@@ -29,6 +29,7 @@ import {
   WorkoutItem,
   WorkoutSkeleton,
 } from "@/types";
+import { DurationUnit } from "@/types/workouts";
 
 // Add this type definition
 type GeneratedScheduledWorkout = ScheduledWorkout & { notes: string };
@@ -300,7 +301,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     type: IntervalType.ACTIVE,
     durationType: DurationType.TIME,
     durationValue: 0,
-    durationUnit: "minutes",
+    durationUnit: DurationUnit.MINUTES,
     intensityType: IntensityType.NONE,
     intensityMin: "",
     intensityMax: "",
@@ -347,7 +348,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
           type: IntervalType.ACTIVE,
           durationType: DurationType.TIME,
           durationValue: 0,
-          durationUnit: "minutes",
+          durationUnit: DurationUnit.MINUTES,
           intensityType: IntensityType.NONE,
           intensityMin: "",
           intensityMax: "",
