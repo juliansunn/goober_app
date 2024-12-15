@@ -4,6 +4,7 @@ import {
   IntervalType,
   DurationType,
   IntensityType,
+  DurationUnit,
 } from "../types/workouts";
 
 // Interval schema
@@ -11,7 +12,7 @@ const intervalSchema = z.object({
   type: z.nativeEnum(IntervalType),
   durationType: z.nativeEnum(DurationType),
   durationValue: z.number().positive(),
-  durationUnit: z.string(),
+  durationUnit: z.nativeEnum(DurationUnit),
   intensityType: z.nativeEnum(IntensityType),
   intensityMin: z.string().optional(),
   intensityMax: z.string().optional(),
