@@ -55,6 +55,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { useForm } from "react-hook-form";
 import { IntervalList } from "./interval-list";
+import { useRouter } from "next/navigation";
 
 interface WorkoutBuilderProps {
   existingWorkout?: Workout | null;
@@ -83,6 +84,8 @@ export function WorkoutBuilder({
     isLoadingCreateOrUpdateWorkout: isLoading,
     initializeWorkout,
   } = useWorkout();
+
+  const router = useRouter();
 
   const [isIntervalDialogOpen, setIsIntervalDialogOpen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
@@ -123,6 +126,7 @@ export function WorkoutBuilder({
       if (onSave) {
         onSave(savedWorkout);
       }
+      router.push("/workouts");
     } catch (error) {
       console.error("Error saving workout:", error);
     }
@@ -216,6 +220,17 @@ export function WorkoutBuilder({
     };
     setWorkout(updatedWorkout);
   };
+
+  const createNewInterval = (id: number) => ({
+    id,
+    type: IntervalType.ACTIVE,
+    durationType: DurationType.TIME,
+    durationValue: 0,
+    durationUnit: DurationUnit.MINUTES,
+    intensityType: IntensityType.NONE,
+    intensityMin: "",
+    intensityMax: "",
+  });
 
   return (
     <div className="container mx-auto p-4 max-w-3xl">
@@ -313,18 +328,12 @@ export function WorkoutBuilder({
                   setEditingItem(null);
                   setIsIntervalDialogOpen(true);
                   setIsRepeatMode(false);
-                  setNewInterval({
-                    id: workout.items.length + 1,
-                    type: IntervalType.ACTIVE,
-                    durationType: DurationType.TIME,
-                    durationValue: 0,
-                    durationUnit: DurationUnit.MINUTES,
-                    intensityType: IntensityType.NONE,
-                    intensityMin: "",
-                    intensityMax: "",
-                  });
+                  const initialInterval = createNewInterval(
+                    workout.items.length + 1
+                  );
+                  setNewInterval(initialInterval);
                   setNewRepeatGroup({
-                    intervals: [newInterval],
+                    intervals: [{ ...initialInterval }],
                     repeats: 1,
                   });
                 }}
@@ -394,19 +403,18 @@ export function WorkoutBuilder({
                     <Button
                       type="button"
                       onClick={() => {
-                        const newInterval = {
-                          id: newRepeatGroup.intervals.length + 1,
-                          type: IntervalType.ACTIVE,
-                          durationType: DurationType.TIME,
-                          durationValue: 0,
-                          durationUnit: DurationUnit.MINUTES,
-                          intensityType: IntensityType.NONE,
-                          intensityMin: "",
-                          intensityMax: "",
-                        };
+                        const newIntervalId =
+                          Math.max(
+                            ...newRepeatGroup.intervals.map((i) => i.id ?? 0),
+                            0
+                          ) + 1;
+                        const newInterval = createNewInterval(newIntervalId);
                         setNewRepeatGroup({
                           ...newRepeatGroup,
-                          intervals: [...newRepeatGroup.intervals, newInterval],
+                          intervals: [
+                            ...newRepeatGroup.intervals,
+                            { ...newInterval },
+                          ],
                         });
                       }}
                     >
