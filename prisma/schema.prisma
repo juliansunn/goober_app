@@ -91,6 +91,8 @@ model ScheduledWorkout {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  week        Week?    @relation(fields: [weekId], references: [id])
+  weekId      Int?
 }
 
 model Workout {
@@ -167,22 +169,24 @@ model Phase {
 }
 
 model Week {
-  id          Int          @id @default(autoincrement())
-  weekNumber  Int
-  startDate   DateTime
-  endDate     DateTime
-  focus       WeekFocus
-  description String
-  volumeValue Float
-  volumeType  DurationType
-  Phase       Phase?       @relation(fields: [phaseId], references: [id])
-  phaseId     Int?
+  id                Int                @id @default(autoincrement())
+  weekNumber        Int
+  startDate         DateTime
+  endDate           DateTime
+  focus             WeekFocus
+  description       String
+  volumeValue       Float
+  volumeType        DurationType
+  Phase             Phase?             @relation(fields: [phaseId], references: [id])
+  phaseId           Int?
+  scheduledWorkouts ScheduledWorkout[]
 }
 
 enum WorkoutType {
   RUN
   BIKE
   SWIM
+  TRIATHLON
 }
 
 enum IntervalType {

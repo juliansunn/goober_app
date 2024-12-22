@@ -2,7 +2,7 @@ import {
   PhaseObjective as PrismaPhaseObjective,
   WeekFocus as PrismaWeekFocus,
 } from "@prisma/client";
-import { DurationType } from "./workouts";
+import { DurationType, WorkoutType } from "./workouts";
 
 export const PhaseObjective = PrismaPhaseObjective;
 export type PhaseObjective =
@@ -37,5 +37,11 @@ export interface TrainingSchedule {
 }
 
 export interface WorkoutSkeleton {
+  schedule: TrainingSchedule;
+}
+
+export interface WorkoutSkeletonFormData {
+  title: string;
+  type: WorkoutType;
   schedule: TrainingSchedule;
 }

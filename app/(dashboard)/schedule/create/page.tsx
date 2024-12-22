@@ -1,4 +1,4 @@
-import { WorkoutScheduleCreatorComponent } from "@/components/workout-schedule-creator";
+import { WorkoutScheduleCreatorComponent } from "@/components/workoutScheduleCreator";
 
 export default function CreateSchedulePage() {
   return (

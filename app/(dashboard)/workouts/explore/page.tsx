@@ -6,6 +6,8 @@ import { Workout } from "@/types/workouts";
 import { Bot } from "lucide-react";
 import { ExpandingPromptInput } from "@/components/CustomTextArea";
 import { generateWorkout } from "@/functions/generators";
+import { AiLoading } from "@/components/ui/AiLoading";
+import { toast } from "sonner";
 
 const Explore = () => {
   const [prompt, setPrompt] = useState("");
@@ -14,10 +16,16 @@ const Explore = () => {
 
   const handleGenerateWorkout = async () => {
     setIsLoading(true);
-    const workout = await generateWorkout(prompt);
-
-    setWorkout(workout);
-    setIsLoading(false);
+    try {
+      const workout = await generateWorkout(prompt);
+      setWorkout(workout);
+      toast.success("Workout generated successfully!");
+    } catch (error) {
+      console.error("Error generating workout:", error);
+      toast.error("Failed to generate workout");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -35,13 +43,7 @@ const Explore = () => {
       />
 
       {isLoading && (
-        <div className="flex justify-center items-center mt-8">
-          <div className="relative w-20 h-20">
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-slate-200 rounded-full"></div>
-            <div className="absolute top-0 left-0 w-full h-full border-4 border-purple-500 rounded-full animate-spin border-t-transparent"></div>
-            <Bot className="animate-reverse-spin animate-pulse absolute inset-0 w-1/2 h-1/2 m-auto text-primary" />
-          </div>
-        </div>
+        <AiLoading loadingText="Creating your personalized workout..." />
       )}
 
       {workout && <WorkoutBuilder existingWorkout={workout} />}

@@ -77,6 +77,7 @@ type WorkoutContextType = {
   reorderWorkoutItems: (newOrder: WorkoutItem[]) => void;
   setIsEditing: (isEditing: boolean) => void;
   initializeWorkout: (existingWorkout: Workout | null) => void;
+  isGeneratingSkeleton: boolean;
   skeleton: WorkoutSkeleton | null;
   generateSkeleton: (formData: any) => Promise<void>;
 };
@@ -95,6 +96,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingCreateOrUpdateWorkout, setIsLoadingCreateOrUpdateWorkout] =
     useState(false);
   const perPage = 50;
+  const [isGeneratingSkeleton, setIsGeneratingSkeleton] = useState(false);
   const [skeleton, setSkeleton] = useState<WorkoutSkeleton | null>(null);
   const {
     data: scheduledWorkouts,
@@ -181,23 +183,30 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const generateSkeleton = useCallback(async (formData: any) => {
-    // TODO: Remove this hardcoded prompt
-    const prompt = {
-      prompt:
-        '{"scheduleTitle":"Napa Valley Marathon Training","startDate":"2024-12-03","raceName":"Napa Valley Marathon","raceType":"running","raceDistance":"Marathon","customDistance":"","customDistanceUnit":"","raceDate":"2025-02-02","restDay":"monday","experienceLevel":"advanced","goalTimeHours":"2","goalTimeMinutes":"34","goalTimeSeconds":"00","additionalNotes":"I like it when weekends have two fairly long runs with the first usually being a workout.  Then on Monday, I would have a day off to recover from a long weekend of working out.","goalTime":"02:34:00"}',
-    };
-    const response = await fetch("/api/generate-skeleton", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(prompt),
-    });
-    if (!response.ok) {
-      throw new Error("Failed to generate workout skeleton");
-    }
+    setIsGeneratingSkeleton(true);
+    try {
+      const response = await fetch("/api/generate-skeleton", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: JSON.stringify(formData) }),
+      });
 
-    setSkeleton(await response.json());
+      if (!response.ok) {
+        throw new Error("Failed to generate workout skeleton");
+      }
+
+      const data = await response.json();
+      setSkeleton(data);
+      toast.success("Workout schedule skeleton generated successfully!");
+    } catch (error) {
+      console.error("Error generating workout skeleton:", error);
+      toast.error("Failed to generate workout schedule skeleton");
+      throw error;
+    } finally {
+      setIsGeneratingSkeleton(false);
+    }
   }, []);
 
   const setDateRange = useCallback(
@@ -442,6 +451,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         isEditing,
         setIsEditing,
         initializeWorkout,
+        isGeneratingSkeleton,
         skeleton,
         generateSkeleton,
       }}
