@@ -16,6 +16,7 @@ import {
 } from "../ui/select";
 import { Input } from "../ui/input";
 import { X } from "lucide-react";
+import { getIntensityUnit } from "@/lib/workout-utils";
 
 const DurationSelector = ({
   durationType,
@@ -105,20 +106,8 @@ const IntensityTargetSelector = ({
   onChange: (type: IntensityType, min: string, max: string) => void;
 }) => {
   const isPaceType = Object.values(IntensityType).includes(intensityType);
-  const unit =
-    intensityType === IntensityType.CADENCE
-      ? "rpm"
-      : intensityType === IntensityType.HEART_RATE
-        ? "bpm"
-        : intensityType === IntensityType.POWER
-          ? "watts"
-          : intensityType === IntensityType.PACE_MILE
-            ? "min/mile"
-            : intensityType === IntensityType.PACE_KM
-              ? "min/km"
-              : intensityType === IntensityType.PACE_400M
-                ? "sec/400m"
-                : "";
+
+  const unit = getIntensityUnit(intensityType);
 
   return (
     <div className="grid gap-2">

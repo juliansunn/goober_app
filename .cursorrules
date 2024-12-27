@@ -13,12 +13,12 @@ const nextjsAppRouterBestPractices = [
 
 // Folder structure
 const folderStructure = `app/
-  layout.js
-  page.js
-  components/
-  lib/
-  styles/
-public/`;
+layout.js
+page.js
+styles/
+public/
+components/
+lib/
 
 // Additional instructions
 const additionalInstructions = `
@@ -37,4 +37,8 @@ const additionalInstructions = `
 12. Use prisma for database operations
 13. Use clerk for authentication
 14. Use react-query for data fetching
+15. Use zod for data validation
+16. Use shadcn/ui for components
+17. Use next-themes for theme management
+18. Use single responsibility principle for components; if a component is doing too much, split it into smaller components so that each component is responsible for a single task.
     `;

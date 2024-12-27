@@ -1,4 +1,24 @@
-import { IntervalType, WorkoutType } from "@/types/workouts";
+import { IntensityType, IntervalType, WorkoutType } from "@/types/workouts";
+
+export const getIntensityUnit = (type: IntensityType): string => {
+  switch (type) {
+    case IntensityType.CADENCE:
+      return "rpm";
+    case IntensityType.HEART_RATE:
+      return "bpm";
+    case IntensityType.POWER:
+      return "watts";
+    case IntensityType.PACE_MILE:
+      return "min/mile";
+    case IntensityType.PACE_KM:
+      return "min/km";
+
+    case IntensityType.PACE_400M:
+      return "sec/400m";
+    default:
+      return "";
+  }
+};
 
 export function getIntervalColor(type: IntervalType): string {
   switch (type) {
