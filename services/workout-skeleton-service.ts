@@ -1,8 +1,7 @@
-import { WorkoutSkeleton } from "@/types";
 import { WorkoutSkeletonFormData } from "@/types/skeleton";
 
 export const workoutSkeletonService = {
-  async getAll(): Promise<WorkoutSkeleton[]> {
+  async getAll(): Promise<WorkoutSkeletonFormData[]> {
     const response = await fetch("/api/workout-skeletons");
     if (!response.ok) {
       throw new Error("Failed to fetch workout skeletons");
@@ -10,7 +9,7 @@ export const workoutSkeletonService = {
     return response.json();
   },
 
-  async getById(id: string): Promise<WorkoutSkeleton> {
+  async getById(id: string): Promise<WorkoutSkeletonFormData> {
     const response = await fetch(`/api/workout-skeletons/${id}`);
     if (!response.ok) {
       throw new Error("Failed to fetch workout skeleton");
@@ -18,7 +17,9 @@ export const workoutSkeletonService = {
     return response.json();
   },
 
-  async create(data: WorkoutSkeletonFormData): Promise<WorkoutSkeleton> {
+  async create(
+    data: WorkoutSkeletonFormData
+  ): Promise<WorkoutSkeletonFormData> {
     const response = await fetch("/api/workout-skeletons", {
       method: "POST",
       headers: {
@@ -34,8 +35,8 @@ export const workoutSkeletonService = {
 
   async update(
     id: string,
-    data: Partial<WorkoutSkeleton>
-  ): Promise<WorkoutSkeleton> {
+    data: Partial<WorkoutSkeletonFormData>
+  ): Promise<WorkoutSkeletonFormData> {
     const response = await fetch(`/api/workout-skeletons/${id}`, {
       method: "PATCH",
       headers: {

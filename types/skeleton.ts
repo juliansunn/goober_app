@@ -36,12 +36,10 @@ export interface TrainingSchedule {
   phases: Phase[];
 }
 
-export interface WorkoutSkeleton {
-  schedule: TrainingSchedule;
-}
+export interface WorkoutSkeleton extends TrainingSchedule {}
 
-export interface WorkoutSkeletonFormData {
+export interface WorkoutSkeletonFormData extends TrainingSchedule {
+  id?: string;
   title: string;
   type: WorkoutType;
-  schedule: TrainingSchedule;
 }

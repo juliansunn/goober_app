@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { DurationType } from "@/types/workouts";
+import { DurationType, WorkoutType } from "@/types/workouts";
 import { PhaseObjective, WeekFocus } from "@/types/skeleton";
 export const DurationTypeSchema = z
   .enum(Object.values(DurationType) as [DurationType, ...DurationType[]])
@@ -62,4 +62,10 @@ export const workoutSkeletonSchema = z.object({
       )
       .describe("List of training phases making up the overall schedule"),
   }),
+});
+
+export const WorkoutSkeletonFormDataSchema = z.object({
+  title: z.string().describe("Title of the workout skeleton"),
+  type: z.nativeEnum(WorkoutType).describe("The types of workouts to generate"),
+  schedule: workoutSkeletonSchema,
 });

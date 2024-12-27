@@ -58,6 +58,13 @@ export async function GET(
         id: parseInt(params.skeletonId),
         userId: user.id,
       },
+      include: {
+        phases: {
+          include: {
+            weeks: true,
+          },
+        },
+      },
     });
 
     if (!workoutSkeleton) {

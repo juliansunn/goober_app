@@ -21,7 +21,7 @@ interface WorkoutWeeklyCalendarProps {
 }
 
 const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
-  return skeleton?.schedule.phases.find((phase) => {
+  return skeleton?.phases.find((phase) => {
     return phase.weeks.find((week) => {
       return week.startDate === date.toISOString();
     });
@@ -54,16 +54,12 @@ export function WorkoutWeeklyCalendar({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <CardTitle>
-            Week {skeleton?.schedule.phases[0].weeks[0].weekNumber}
-          </CardTitle>
+          <CardTitle>Week {skeleton?.phases[0].weeks[0].weekNumber}</CardTitle>
           <Button variant="outline" size="icon" onClick={() => {}}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <CardDescription>
-          Description: {skeleton?.schedule.description}
-        </CardDescription>
+        <CardDescription>Description: {skeleton?.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-7 gap-2">
@@ -82,10 +78,10 @@ export function WorkoutWeeklyCalendar({
       </CardContent>
       <CardFooter className="flex justify-between">
         <div>
-          <p>Focus: {skeleton?.schedule.phases[0].weeks[0].focus}</p>
+          <p>Focus: {skeleton?.phases[0].weeks[0].focus}</p>
           <p>
-            Planned Volume: {skeleton?.schedule.phases[0].weeks[0].volumeType}{" "}
-            {skeleton?.schedule.phases[0].weeks[0].volumeValue}
+            Planned Volume: {skeleton?.phases[0].weeks[0].volumeType}{" "}
+            {skeleton?.phases[0].weeks[0].volumeValue}
           </p>
         </div>
         <Button onClick={handleGenerateWorkouts}>Generate Workouts</Button>

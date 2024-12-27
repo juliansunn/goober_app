@@ -23,6 +23,13 @@ export async function GET() {
       where: {
         userId: user.id,
       },
+      include: {
+        phases: {
+          include: {
+            weeks: true,
+          },
+        },
+      },
       orderBy: {
         createdAt: "desc",
       },

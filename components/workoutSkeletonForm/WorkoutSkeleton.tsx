@@ -12,46 +12,31 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 import { format } from "date-fns";
-import { toast } from "sonner";
-import { workoutSkeletonService } from "@/services/workout-skeleton-service";
-import type { WorkoutSkeleton } from "@/types";
-import { WorkoutType } from "@/types/workouts";
-
-interface WorkoutSkeletonProps {
-  title: string;
-  type: WorkoutType;
-  skeletonData?: WorkoutSkeleton;
-}
+import { useWorkout } from "@/app/contexts/WorkoutContext";
+import { WorkoutSkeletonFormData } from "@/types/skeleton";
 
 export function WorkoutSkeleton({
-  title,
-  type,
-  skeletonData,
-}: WorkoutSkeletonProps) {
-  const [isSaving, setIsSaving] = useState(false);
+  userSkeleton,
+}: {
+  userSkeleton: WorkoutSkeletonFormData;
+}) {
+  const { isSavingSkeleton, updateSkeleton, deleteSkeleton } = useWorkout();
 
-  if (!skeletonData) return null;
+  if (!userSkeleton) return null;
 
-  const totalPhases = skeletonData?.schedule.phases.length;
+  const totalPhases = userSkeleton.phases.length;
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "MMMM d, yyyy");
   };
 
   const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      await workoutSkeletonService.create({
-        title,
-        type,
-        schedule: skeletonData.schedule,
-      });
-      toast.success("Workout schedule saved successfully!");
-    } catch (error) {
-      console.error("Error saving workout schedule:", error);
-      toast.error("Failed to save workout schedule");
-    } finally {
-      setIsSaving(false);
+    await updateSkeleton(userSkeleton);
+  };
+
+  const handleDelete = async () => {
+    if (await deleteSkeleton()) {
+      // Handle successful deletion, e.g., redirect
     }
   };
 
@@ -59,20 +44,36 @@ export function WorkoutSkeleton({
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>
-          Workout Schedule: {formatDate(skeletonData?.schedule.startDate)} to{" "}
-          {formatDate(skeletonData?.schedule.endDate)}
+          Workout Schedule: {formatDate(userSkeleton.startDate)} to{" "}
+          {formatDate(userSkeleton.endDate)}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4">{skeletonData.schedule.description}</p>
+        <p className="mb-4">{userSkeleton.description}</p>
         <Carousel className="w-full">
           <CarouselContent>
-            {skeletonData?.schedule.phases.map((phase, index) => (
+            {userSkeleton.phases.map((phase, index) => (
               <CarouselItem key={index}>
                 <PhaseView
                   phase={phase}
-                  phaseNumber={index + 1}
+                  phaseIndex={index}
                   totalPhases={totalPhases}
+                  previousPhase={
+                    index > 0 ? userSkeleton.phases[index - 1] : undefined
+                  }
+                  nextPhase={
+                    index < totalPhases - 1
+                      ? userSkeleton.phases[index + 1]
+                      : undefined
+                  }
+                  onUpdate={(updatedPhase) => {
+                    const updatedPhases = [...userSkeleton.phases];
+                    updatedPhases[index] = updatedPhase;
+                    updateSkeleton({
+                      ...userSkeleton,
+                      phases: updatedPhases,
+                    });
+                  }}
                 />
               </CarouselItem>
             ))}
@@ -81,8 +82,19 @@ export function WorkoutSkeleton({
           <CarouselNext />
         </Carousel>
         <div className="mt-4 space-x-2">
-          <Button variant="secondary" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save"}
+          <Button
+            variant="secondary"
+            onClick={handleSave}
+            disabled={isSavingSkeleton}
+          >
+            {isSavingSkeleton ? "Saving..." : "Save"}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isSavingSkeleton}
+          >
+            Delete
           </Button>
         </div>
       </CardContent>

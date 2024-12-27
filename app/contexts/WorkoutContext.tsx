@@ -30,6 +30,8 @@ import {
   WorkoutSkeleton,
 } from "@/types";
 import { DurationUnit } from "@/types/workouts";
+import { workoutSkeletonService } from "@/services/workout-skeleton-service";
+import { WorkoutSkeletonFormData } from "@/types/skeleton";
 
 // Add this type definition
 type GeneratedScheduledWorkout = ScheduledWorkout & { notes: string };
@@ -80,6 +82,12 @@ type WorkoutContextType = {
   isGeneratingSkeleton: boolean;
   skeleton: WorkoutSkeleton | null;
   generateSkeleton: (formData: any) => Promise<void>;
+  userSkeleton: WorkoutSkeletonFormData | null;
+  isLoadingSkeleton: boolean;
+  isSavingSkeleton: boolean;
+  loadSkeleton: (id: string) => Promise<void>;
+  updateSkeleton: (data: WorkoutSkeletonFormData) => Promise<boolean>;
+  deleteSkeleton: () => Promise<boolean>;
 };
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);
@@ -324,7 +332,7 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     setBuilderWorkout(defaultEmptyWorkout);
     setIsEditing(false);
     setEditingItem(null);
-  }, []);
+  }, [defaultEmptyWorkout]);
 
   const addWorkoutItem = useCallback(
     (isRepeatMode: boolean) => {
@@ -404,16 +412,71 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  const initializeWorkout = useCallback((existingWorkout: Workout | null) => {
-    if (existingWorkout) {
-      setBuilderWorkout(existingWorkout);
-      setIsEditing(true);
-    } else {
-      setBuilderWorkout(defaultEmptyWorkout);
-      setIsEditing(false);
+  const initializeWorkout = useCallback(
+    (existingWorkout: Workout | null) => {
+      if (existingWorkout) {
+        setBuilderWorkout(existingWorkout);
+        setIsEditing(true);
+      } else {
+        setBuilderWorkout(defaultEmptyWorkout);
+        setIsEditing(false);
+      }
+      setEditingItem(null);
+    },
+    [defaultEmptyWorkout]
+  );
+
+  const [userSkeleton, setUserSkeleton] =
+    useState<WorkoutSkeletonFormData | null>(null);
+  const [isLoadingSkeleton, setIsLoadingSkeleton] = useState(false);
+  const [isSavingSkeleton, setIsSavingSkeleton] = useState(false);
+
+  // Add skeleton CRUD operations
+  const loadSkeleton = useCallback(async (id: string) => {
+    try {
+      setIsLoadingSkeleton(true);
+      const data = await workoutSkeletonService.getById(id);
+      setUserSkeleton(data);
+    } catch (error) {
+      toast.error("Failed to load workout schedule");
+      console.error(error);
+    } finally {
+      setIsLoadingSkeleton(false);
     }
-    setEditingItem(null);
   }, []);
+
+  const updateSkeleton = async (data: WorkoutSkeletonFormData) => {
+    if (!userSkeleton?.id) return false;
+    try {
+      setIsSavingSkeleton(true);
+      await workoutSkeletonService.update(userSkeleton.id, data);
+      setUserSkeleton(data);
+      toast.success("Workout schedule saved successfully!");
+      return true;
+    } catch (error) {
+      toast.error("Failed to save workout schedule");
+      console.error(error);
+      return false;
+    } finally {
+      setIsSavingSkeleton(false);
+    }
+  };
+
+  const deleteSkeleton = async () => {
+    if (!userSkeleton?.id) return false;
+    try {
+      setIsSavingSkeleton(true);
+      await workoutSkeletonService.delete(userSkeleton.id);
+      toast.success("Workout schedule deleted successfully!");
+      return true;
+    } catch (error) {
+      toast.error("Failed to delete workout schedule");
+      console.error(error);
+      return false;
+    } finally {
+      setIsSavingSkeleton(false);
+    }
+  };
 
   return (
     <WorkoutContext.Provider
@@ -454,6 +517,12 @@ export function WorkoutProvider({ children }: { children: React.ReactNode }) {
         isGeneratingSkeleton,
         skeleton,
         generateSkeleton,
+        userSkeleton,
+        isLoadingSkeleton,
+        isSavingSkeleton,
+        loadSkeleton,
+        updateSkeleton,
+        deleteSkeleton,
       }}
     >
       {children}

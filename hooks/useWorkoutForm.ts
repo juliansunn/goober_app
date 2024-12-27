@@ -16,7 +16,7 @@ const initialFormData: WorkoutScheduleFormData = {
   raceDistance: "",
   customDistance: "",
   customDistanceUnit: "",
-  raceDate: new Date(),
+  raceDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
   restDay: "",
   experienceLevel: "",
   goalTimeHours: "",

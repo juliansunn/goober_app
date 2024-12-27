@@ -20,12 +20,10 @@ export function CreateSkeletonForm({ onSubmit }: CreateSkeletonFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const skeletonData: WorkoutSkeleton = {
-      schedule: {
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        description: formData.description,
-        phases: [],
-      },
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      description: formData.description,
+      phases: [],
     };
     onSubmit(skeletonData);
   };

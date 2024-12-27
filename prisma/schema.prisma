@@ -236,4 +236,5 @@ enum WeekFocus {
   THRESHOLD
   SPEED
   RECOVERY
+  BASE
 }

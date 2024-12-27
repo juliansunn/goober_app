@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { columns } from "../../(dashboard)/schedule/all/columns";
 import prisma from "@/lib/prisma";
-import { DataTable } from "../../(dashboard)/schedule/all/data-table";
 import { auth } from "@clerk/nextjs/server";
 import { getOrCreateUser } from "@/app/actions/user";
+import { DataTable } from "@/app/(dashboard)/schedules/data-table";
+import { columns } from "@/app/(dashboard)/schedules/columns";
 
 async function getWorkoutSchedules(userId: number) {
   const skeletons = await prisma.workoutSkeleton.findMany({
@@ -16,6 +16,7 @@ async function getWorkoutSchedules(userId: number) {
     scheduleTitle: skeleton.title,
     raceName: skeleton.description,
     raceType: skeleton.type,
+    // TODO: Add race distance
     raceDistance: "Marathon",
     raceDate: skeleton.endDate,
     createdAt: skeleton.createdAt,
