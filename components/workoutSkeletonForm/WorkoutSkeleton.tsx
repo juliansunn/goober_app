@@ -55,6 +55,7 @@ export function WorkoutSkeleton({
             {userSkeleton.phases.map((phase, index) => (
               <CarouselItem key={index}>
                 <PhaseView
+                  scheduleId={userSkeleton.id}
                   phase={phase}
                   phaseIndex={index}
                   totalPhases={totalPhases}

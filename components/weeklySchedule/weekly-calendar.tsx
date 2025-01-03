@@ -15,11 +15,6 @@ import { getWeekDates } from "@/utils/date-utils";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { WorkoutSkeleton } from "@/types";
 
-interface WorkoutWeeklyCalendarProps {
-  handlePrevWeek: (date: Date) => void;
-  handleNextWeek: (date: Date) => void;
-}
-
 const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
   return skeleton?.phases.find((phase) => {
     return phase.weeks.find((week) => {
@@ -28,10 +23,7 @@ const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
   });
 };
 
-export function WorkoutWeeklyCalendar({
-  handlePrevWeek,
-  handleNextWeek,
-}: WorkoutWeeklyCalendarProps) {
+export function WorkoutWeeklyCalendar() {
   const { skeleton, generateSchedule } = useWorkout();
   const today = new Date().toISOString();
   const weekDates = getWeekDates(today);
@@ -47,11 +39,7 @@ export function WorkoutWeeklyCalendar({
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePrevWeek(weekDates[0])}
-          >
+          <Button variant="outline" size="icon">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <CardTitle>Week {skeleton?.phases[0].weeks[0].weekNumber}</CardTitle>

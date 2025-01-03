@@ -55,15 +55,15 @@ const data = {
     {
       icon: Calendar,
       label: "Schedule",
-      href: "/schedule",
+      href: "/schedules",
       subItems: [
         { icon: Calendar, label: "All Schedules", href: "/schedules/all" },
-        { icon: PlusCircle, label: "Create", href: "/schedule/create" },
-        { icon: Calendar, label: "Calendar", href: "/schedule/calendar" },
+        { icon: PlusCircle, label: "Create", href: "/schedules/create" },
+        { icon: Calendar, label: "Calendar", href: "/schedules/calendar" },
         {
           icon: CalendarCogIcon,
           label: "Weekly",
-          href: "/schedule/weekly-calendar",
+          href: "/schedules/weekly-calendar",
         },
       ],
     },

@@ -63,10 +63,7 @@ export function WeeklyCalendarComponent() {
 
   return (
     <>
-      <WorkoutWeeklyCalendar
-        handlePrevWeek={setStartDate}
-        handleNextWeek={setEndDate}
-      />
+      <WorkoutWeeklyCalendar />
       {isFetchingStrava || (isLoadingWorkouts && <LoadingCenter />)}
     </>
   );
