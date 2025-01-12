@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useWorkout } from "@/app/contexts/WorkoutContext";
-import { WorkoutSkeletonForm } from "./workoutSkeletonForm/WorkoutSkeletonForm";
+import { WorkoutScheduleForm } from "./workoutSkeletonForm/WorkoutScheduleForm";
 import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 import { AiLoading } from "./ui/AiLoading";
 import { TrainingPreferencesStep } from "./workoutSkeletonForm/TrainingPreferencesStep";
@@ -11,46 +10,57 @@ import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { Brain, PencilRuler } from "lucide-react";
-
+import { WorkoutScheduleFormData } from "@/types/workout";
+import { useRouter } from "next/navigation";
 export function WorkoutScheduleCreatorComponent() {
   const [step, setStep] = useState(0);
-  const { isLoadingScheduledWorkouts, isGeneratingSkeleton, skeleton } =
-    useWorkout();
+  const { isLoadingScheduledWorkouts } = useWorkoutForm();
+  const [initialData, setInitialData] =
+    useState<WorkoutScheduleFormData | null>(null);
+  const router = useRouter();
+
   const {
     formData,
     errors,
     showCustomDistance,
+    isGeneratingWorkoutSchedule,
+    skeleton,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
     handleSubmit,
+    createWorkoutSchedule,
   } = useWorkoutForm();
 
   const handleManualCreate = () => {
-    const initialSkeleton = {
-      title: formData.scheduleTitle,
-      type: formData.raceType,
-      startDate: formData.startDate?.toISOString() ?? new Date().toISOString(),
-      endDate: formData.raceDate?.toISOString() ?? new Date().toISOString(),
-      description: formData.additionalNotes ?? "",
-      phases: [],
-    };
-
-    return (
-      <WorkoutSkeletonForm
-        initialData={initialSkeleton}
-        onSave={async (data) => {
-          // Handle saving the skeleton
-        }}
-      />
-    );
+    setInitialData({
+      scheduleTitle: formData.scheduleTitle,
+      startDate: formData.startDate,
+      raceName: formData.raceName,
+      raceType: formData.raceType,
+      raceDistance: formData.raceDistance,
+      customDistance: formData.customDistance,
+      customDistanceUnit: formData.customDistanceUnit,
+      raceDate: formData.raceDate,
+      restDay: formData.restDay,
+      experienceLevel: formData.experienceLevel,
+      goalTimeHours: formData.goalTimeHours,
+      goalTimeMinutes: formData.goalTimeMinutes,
+      goalTimeSeconds: formData.goalTimeSeconds,
+      additionalNotes: formData.additionalNotes,
+    });
   };
 
-  if (isLoadingScheduledWorkouts || isGeneratingSkeleton) {
+  // Helper function to check if there are any actual errors
+  const hasValidationErrors = (errors: Record<string, string>) => {
+    return Object.values(errors).some((error) => error !== "");
+  };
+
+  if (isLoadingScheduledWorkouts || isGeneratingWorkoutSchedule) {
     return (
       <AiLoading
         loadingText={
-          isGeneratingSkeleton
+          isGeneratingWorkoutSchedule
             ? "Creating your personalized workout schedule..."
             : "Generating your workout schedule..."
         }
@@ -60,18 +70,23 @@ export function WorkoutScheduleCreatorComponent() {
 
   if (skeleton) {
     return (
-      <WorkoutSkeletonForm
+      <WorkoutScheduleForm
         initialData={{
-          title: formData.scheduleTitle,
-          type: formData.raceType,
-          description: formData.additionalNotes ?? "",
-          startDate:
-            formData.startDate?.toISOString() ?? new Date().toISOString(),
-          endDate: formData.raceDate?.toISOString() ?? new Date().toISOString(),
-          phases: skeleton.phases,
-        }}
-        onSave={async (data) => {
-          // Handle saving the skeleton
+          scheduleTitle: formData.scheduleTitle,
+          startDate: formData.startDate,
+          raceName: formData.raceName,
+          raceType: formData.raceType,
+          raceDistance: formData.raceDistance,
+          customDistance: formData.customDistance,
+          customDistanceUnit: formData.customDistanceUnit,
+          raceDate: formData.raceDate,
+          restDay: formData.restDay,
+          experienceLevel: formData.experienceLevel,
+          goalTimeHours: formData.goalTimeHours,
+          goalTimeMinutes: formData.goalTimeMinutes,
+          goalTimeSeconds: formData.goalTimeSeconds,
+          additionalNotes: formData.additionalNotes,
+          schedule: skeleton,
         }}
       />
     );
@@ -102,7 +117,6 @@ export function WorkoutScheduleCreatorComponent() {
               onInputChange={handleInputChange}
               onSelectChange={handleSelectChange}
               onBack={() => setStep(0)}
-              onSubmit={() => {}}
             />
 
             <Separator className="my-6" />
@@ -111,7 +125,7 @@ export function WorkoutScheduleCreatorComponent() {
               <Button
                 className="flex-1"
                 onClick={handleSubmit}
-                disabled={Object.keys(errors).length > 0}
+                disabled={hasValidationErrors(errors)}
               >
                 <Brain className="mr-2 h-4 w-4" />
                 Generate with AI
@@ -120,7 +134,7 @@ export function WorkoutScheduleCreatorComponent() {
                 variant="outline"
                 className="flex-1"
                 onClick={handleManualCreate}
-                disabled={Object.keys(errors).length > 0}
+                disabled={hasValidationErrors(errors)}
               >
                 <PencilRuler className="mr-2 h-4 w-4" />
                 Build Manually

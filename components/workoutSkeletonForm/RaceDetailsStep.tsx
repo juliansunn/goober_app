@@ -50,7 +50,7 @@ export function RaceDetailsStep({
       <DatePickerField
         id="startDate"
         label="Start Date"
-        date={formData.startDate}
+        date={new Date(formData.startDate)}
         onDateChange={onDateChange}
         fieldName="startDate"
       />
@@ -94,7 +94,7 @@ export function RaceDetailsStep({
       <DatePickerField
         id="raceDate"
         label="Race Date"
-        date={formData.raceDate}
+        date={new Date(formData.raceDate)}
         error={errors.raceDate}
         onDateChange={onDateChange}
         fieldName="raceDate"

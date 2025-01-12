@@ -5,18 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { WorkoutScheduleFormData } from "@/types/workout";
 
-export type Schedule = {
-  id: string;
-  scheduleTitle: string;
-  raceName: string;
-  raceType: string;
-  raceDistance: string;
-  raceDate: Date;
-  createdAt: Date;
-};
-
-export const columns: ColumnDef<Schedule>[] = [
+export const columns: ColumnDef<WorkoutScheduleFormData>[] = [
   {
     accessorKey: "scheduleTitle",
     header: ({ column }) => {
@@ -31,9 +22,10 @@ export const columns: ColumnDef<Schedule>[] = [
       );
     },
     cell: ({ row }) => {
+      const id = row.original.id?.toString() || "";
       return (
         <Link
-          href={`/schedules/${row.original.id}`}
+          href={`/schedules/${id}`}
           className="text-blue-600 hover:underline"
         >
           {row.getValue("scheduleTitle")}
@@ -58,13 +50,6 @@ export const columns: ColumnDef<Schedule>[] = [
     header: "Race Date",
     cell: ({ row }) => {
       return formatDate(row.getValue("raceDate"));
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Created",
-    cell: ({ row }) => {
-      return formatDate(row.getValue("createdAt"));
     },
   },
 ];

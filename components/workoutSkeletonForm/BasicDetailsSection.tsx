@@ -20,11 +20,11 @@ import { WorkoutType } from "@/types/workouts";
 import { DatePicker } from "@/components/ui/date-picker";
 import { MarkdownInput } from "@/components/markdown-input";
 import { Card, CardContent } from "@/components/ui/card";
-import { WorkoutSkeletonFormData } from "@/types/skeleton";
 import { addDays } from "date-fns";
+import { WorkoutScheduleFormData } from "@/types/workout";
 
 interface BasicDetailsSectionProps {
-  control: Control<WorkoutSkeletonFormData>;
+  control: Control<WorkoutScheduleFormData>;
 }
 
 export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
@@ -33,7 +33,7 @@ export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
       <CardContent className="space-y-4 pt-6">
         <FormField
           control={control}
-          name="title"
+          name="scheduleTitle"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Title</FormLabel>
@@ -47,7 +47,7 @@ export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
 
         <FormField
           control={control}
-          name="type"
+          name="raceType"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Workout Type</FormLabel>
@@ -79,8 +79,7 @@ export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
                   <DatePicker
                     date={new Date(field.value)}
                     onDateChange={(date) => {
-                      const newDate = date?.toISOString() ?? "";
-                      field.onChange(newDate);
+                      field.onChange(date);
                     }}
                     fromDate={new Date()}
                     toDate={new Date(control._formValues.endDate)}
@@ -93,7 +92,7 @@ export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
 
           <FormField
             control={control}
-            name="endDate"
+            name="raceDate"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Race Date</FormLabel>
@@ -101,8 +100,7 @@ export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
                   <DatePicker
                     date={new Date(field.value)}
                     onDateChange={(date) => {
-                      const newDate = date?.toISOString() ?? "";
-                      field.onChange(newDate);
+                      field.onChange(date);
                     }}
                     fromDate={addDays(
                       new Date(control._formValues.startDate),
@@ -118,10 +116,9 @@ export function BasicDetailsSection({ control }: BasicDetailsSectionProps) {
 
         <FormField
           control={control}
-          name="description"
+          name="schedule.description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
               <FormControl>
                 <MarkdownInput
                   value={field.value}

@@ -16,9 +16,6 @@ export function CalendarComponent() {
   );
 
   const {
-    scheduledWorkouts,
-    isLoadingWorkouts,
-    workoutsError,
     setDateRange,
     stravaActivities,
     isLoadingStrava,
@@ -30,8 +27,8 @@ export function CalendarComponent() {
     setDateRange(startDate, endDate);
   }, [startDate, endDate, setDateRange]);
 
-  const isLoading = isLoadingWorkouts || isLoadingStrava;
-  const error = workoutsError || stravaError;
+  const isLoading = isLoadingStrava;
+  const error = stravaError;
 
   if (isLoading) {
     return <LoadingCenter />;
@@ -41,7 +38,7 @@ export function CalendarComponent() {
     return <ErrorDisplay title="Error" message={error.message} />;
   }
 
-  if (!scheduledWorkouts && !stravaActivities) {
+  if (!stravaActivities) {
     return (
       <ErrorDisplay title="No Data" message="No workouts or activities found" />
     );
@@ -54,7 +51,7 @@ export function CalendarComponent() {
         onStartDateChange={setStartDate}
         onEndDateChange={setEndDate}
       />
-      {isFetchingStrava || (isLoadingWorkouts && <LoadingCenter />)}
+      {isFetchingStrava && <LoadingCenter />}
     </>
   );
 }

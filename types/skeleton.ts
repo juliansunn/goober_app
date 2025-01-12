@@ -12,6 +12,7 @@ export const WeekFocus = PrismaWeekFocus;
 export type WeekFocus = (typeof WeekFocus)[keyof typeof WeekFocus];
 
 export interface Week {
+  id?: number;
   weekNumber: number;
   startDate: string;
   endDate: string;
@@ -22,6 +23,7 @@ export interface Week {
 }
 
 export interface Phase {
+  id?: number;
   name: string;
   startDate: string;
   endDate: string;

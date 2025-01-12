@@ -57,7 +57,7 @@ const data = {
       label: "Schedule",
       href: "/schedules",
       subItems: [
-        { icon: Calendar, label: "All Schedules", href: "/schedules/all" },
+        { icon: Calendar, label: "All Schedules", href: "/schedules" },
         { icon: PlusCircle, label: "Create", href: "/schedules/create" },
         { icon: Calendar, label: "Calendar", href: "/schedules/calendar" },
         {

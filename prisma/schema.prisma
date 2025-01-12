@@ -28,7 +28,7 @@ model User {
   userRacePRs            UserRacePR[]
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
-  WorkoutSkeleton        WorkoutSkeleton[]
+  WorkoutSchedule        WorkoutSchedule[]
 }
 
 enum Discipline {
@@ -143,18 +143,28 @@ model RepeatGroup {
 }
 
 // WORKOUT SKELETON
-model WorkoutSkeleton {
-  id          Int         @id @default(autoincrement())
-  title       String
-  description String
-  type        WorkoutType
-  startDate   DateTime
-  endDate     DateTime
-  user        User        @relation(fields: [userId], references: [id])
-  userId      Int
-  phases      Phase[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+model WorkoutSchedule {
+  id                 Int         @id @default(autoincrement())
+  startDate          DateTime
+  raceDate           DateTime
+  raceName           String
+  raceType           WorkoutType
+  raceDistance       String?
+  customDistance     String?
+  customDistanceUnit String?
+  restDay            String?
+  experienceLevel    String?
+  goalTimeHours      String?
+  goalTimeMinutes    String?
+  goalTimeSeconds    String?
+  additionalNotes    String?
+  scheduleTitle      String
+  description        String
+  user               User        @relation(fields: [userId], references: [id])
+  userId             Int
+  phases             Phase[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 }
 
 model Phase {
@@ -163,8 +173,8 @@ model Phase {
   startDate         DateTime
   endDate           DateTime
   objective         PhaseObjective
-  workoutSkeletonId Int // Add this line
-  workoutSkeleton   WorkoutSkeleton @relation(fields: [workoutSkeletonId], references: [id])
+  workoutScheduleId Int // Add this line
+  workoutSchedule   WorkoutSchedule @relation(fields: [workoutScheduleId], references: [id])
   weeks             Week[]
 }
 

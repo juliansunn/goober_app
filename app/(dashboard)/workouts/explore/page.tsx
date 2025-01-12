@@ -7,22 +7,29 @@ import { Bot } from "lucide-react";
 import { ExpandingPromptInput } from "@/components/CustomTextArea";
 import { generateWorkout } from "@/functions/generators";
 import { AiLoading } from "@/components/ui/AiLoading";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 const Explore = () => {
   const [prompt, setPrompt] = useState("");
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleGenerateWorkout = async () => {
     setIsLoading(true);
     try {
       const workout = await generateWorkout(prompt);
       setWorkout(workout);
-      toast.success("Workout generated successfully!");
+      toast({
+        title: "Workout generated successfully!",
+        variant: "default",
+      });
     } catch (error) {
       console.error("Error generating workout:", error);
-      toast.error("Failed to generate workout");
+      toast({
+        title: "Failed to generate workout",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

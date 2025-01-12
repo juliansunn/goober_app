@@ -13,7 +13,7 @@ import { Form } from "./ui/form";
 import { useForm } from "react-hook-form";
 
 interface PhaseViewProps {
-  scheduleId?: string;
+  scheduleId?: number;
   phase: Phase;
   phaseIndex: number;
   totalPhases: number;
@@ -157,7 +157,6 @@ export function PhaseView({
           <div className="space-y-4 mt-4">
             {phase.weeks.map((week, weekIndex) => (
               <WeekView
-                scheduleId={scheduleId}
                 key={week.weekNumber}
                 week={week}
                 weekIndex={weekIndex}

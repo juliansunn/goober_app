@@ -1,41 +1,24 @@
-import { redirect } from "next/navigation";
-import { columns } from "./columns";
-import prisma from "@/lib/prisma";
-import { DataTable } from "./data-table";
-import { auth } from "@clerk/nextjs/server";
-import { getOrCreateUser } from "@/app/actions/user";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+import Schedules from "./schedules";
+import { getAll } from "@/functions/workout-schedules";
 
-async function getWorkoutSchedules(userId: number) {
-  const skeletons = await prisma.workoutSkeleton.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return skeletons.map((skeleton) => ({
-    id: String(skeleton.id),
-    scheduleTitle: skeleton.title,
-    raceName: skeleton.description,
-    raceType: skeleton.type,
-    raceDistance: "Marathon",
-    raceDate: skeleton.endDate,
-    createdAt: skeleton.createdAt,
-  }));
-}
+export const revalidate = 60 * 1000; // 1 minute
 
 export default async function SchedulesPage() {
-  const { userId } = auth();
+  const queryClient = new QueryClient();
 
-  if (!userId) {
-    redirect("/sign-in");
-  }
-  const user = await getOrCreateUser(userId, {});
-
-  const schedules = await getWorkoutSchedules(user.id);
+  await queryClient.prefetchQuery({
+    queryKey: ["schedules", { page: 1, limit: 100 }],
+    queryFn: () => getAll(),
+  });
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">My Training Schedules</h1>
-      <DataTable columns={columns} data={schedules} />
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Schedules />
+    </HydrationBoundary>
   );
 }

@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { getWeekDates } from "@/utils/date-utils";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { WorkoutSkeleton } from "@/types";
+import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 
 const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
   return skeleton?.phases.find((phase) => {
@@ -24,7 +25,7 @@ const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
 };
 
 export function WorkoutWeeklyCalendar() {
-  const { skeleton, generateSchedule } = useWorkout();
+  const { skeleton, generateSchedule } = useWorkoutForm();
   const today = new Date().toISOString();
   const weekDates = getWeekDates(today);
 

@@ -77,6 +77,7 @@ export function PhaseDialog({
       setAvailableRanges(getAvailableDateRanges());
       setSelectedRange(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Find available date ranges

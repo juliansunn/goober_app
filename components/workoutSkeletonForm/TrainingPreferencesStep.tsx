@@ -21,7 +21,6 @@ interface TrainingPreferencesStepProps {
   ) => void;
   onSelectChange: (name: string, value: string) => void;
   onBack: () => void;
-  onSubmit: (e: React.FormEvent) => void;
 }
 
 export function TrainingPreferencesStep({
@@ -30,7 +29,6 @@ export function TrainingPreferencesStep({
   onInputChange,
   onSelectChange,
   onBack,
-  onSubmit,
 }: TrainingPreferencesStepProps) {
   return (
     <div className="space-y-4">
@@ -146,7 +144,6 @@ export function TrainingPreferencesStep({
         <Button onClick={onBack} variant="outline">
           Back
         </Button>
-        <Button onClick={onSubmit}>Create Workout Schedule</Button>
       </div>
     </div>
   );
