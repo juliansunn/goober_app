@@ -12,67 +12,62 @@ import {
   CarouselPrevious,
 } from "../ui/carousel";
 import { format } from "date-fns";
+import { WorkoutScheduleFormData } from "@/types/workout";
+import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 import { toast } from "sonner";
-import { workoutSkeletonService } from "@/services/workout-skeleton-service";
-import type { WorkoutSkeleton } from "@/types";
-import { WorkoutType } from "@/types/workouts";
 
-interface WorkoutSkeletonProps {
-  title: string;
-  type: WorkoutType;
-  skeletonData?: WorkoutSkeleton;
-}
+export function WorkoutSkeleton({ data }: { data: WorkoutScheduleFormData }) {
+  const {
+    formData,
+    updateWorkoutSchedule,
+    updateWorkoutSchedulePending,
+    deleteWorkoutSchedule,
+  } = useWorkoutForm();
 
-export function WorkoutSkeleton({
-  title,
-  type,
-  skeletonData,
-}: WorkoutSkeletonProps) {
-  const [isSaving, setIsSaving] = useState(false);
+  if (!data) return null;
 
-  if (!skeletonData) return null;
-
-  const totalPhases = skeletonData?.schedule.phases.length;
+  const totalPhases = data.schedule?.phases.length ?? 0;
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), "MMMM d, yyyy");
   };
 
   const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      await workoutSkeletonService.create({
-        title,
-        type,
-        schedule: skeletonData.schedule,
-      });
-      toast.success("Workout schedule saved successfully!");
-    } catch (error) {
-      console.error("Error saving workout schedule:", error);
-      toast.error("Failed to save workout schedule");
-    } finally {
-      setIsSaving(false);
-    }
+    await updateWorkoutSchedule({ data: formData });
+  };
+
+  const handleDelete = async () => {
+    await deleteWorkoutSchedule(formData.id?.toString() ?? "");
   };
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>
-          Workout Schedule: {formatDate(skeletonData?.schedule.startDate)} to{" "}
-          {formatDate(skeletonData?.schedule.endDate)}
+          Workout Schedule: {formatDate(data.startDate)} to{" "}
+          {formatDate(data.raceDate)}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="mb-4">{skeletonData.schedule.description}</p>
+        <p className="mb-4">{data.schedule?.description}</p>
         <Carousel className="w-full">
           <CarouselContent>
-            {skeletonData?.schedule.phases.map((phase, index) => (
+            {data.schedule?.phases.map((phase, index) => (
               <CarouselItem key={index}>
                 <PhaseView
+                  scheduleId={data.id}
                   phase={phase}
-                  phaseNumber={index + 1}
+                  phaseIndex={index}
                   totalPhases={totalPhases}
+                  previousPhase={
+                    index > 0 ? data.schedule?.phases[index - 1] : undefined
+                  }
+                  nextPhase={
+                    index < totalPhases - 1
+                      ? data.schedule?.phases[index + 1]
+                      : undefined
+                  }
+                  onUpdate={handleSave}
                 />
               </CarouselItem>
             ))}
@@ -81,8 +76,19 @@ export function WorkoutSkeleton({
           <CarouselNext />
         </Carousel>
         <div className="mt-4 space-x-2">
-          <Button variant="secondary" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save"}
+          <Button
+            variant="secondary"
+            onClick={handleSave}
+            disabled={updateWorkoutSchedulePending}
+          >
+            {updateWorkoutSchedulePending ? "Saving..." : "Save"}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={updateWorkoutSchedulePending}
+          >
+            Delete
           </Button>
         </div>
       </CardContent>

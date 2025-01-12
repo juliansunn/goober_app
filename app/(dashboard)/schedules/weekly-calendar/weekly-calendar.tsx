@@ -30,9 +30,6 @@ export function WeeklyCalendarComponent() {
   });
 
   const {
-    scheduledWorkouts,
-    isLoadingWorkouts,
-    workoutsError,
     setDateRange,
     stravaActivities,
     isLoadingStrava,
@@ -44,8 +41,8 @@ export function WeeklyCalendarComponent() {
     setDateRange(startDate, endDate);
   }, [startDate, endDate, setDateRange]);
 
-  const isLoading = isLoadingWorkouts || isLoadingStrava;
-  const error = workoutsError || stravaError;
+  const isLoading = isLoadingStrava;
+  const error = stravaError;
 
   if (isLoading) {
     return <LoadingCenter />;
@@ -55,7 +52,7 @@ export function WeeklyCalendarComponent() {
     return <ErrorDisplay title="Error" message={error.message} />;
   }
 
-  if (!scheduledWorkouts && !stravaActivities) {
+  if (!stravaActivities) {
     return (
       <ErrorDisplay title="No Data" message="No workouts or activities found" />
     );
@@ -63,11 +60,8 @@ export function WeeklyCalendarComponent() {
 
   return (
     <>
-      <WorkoutWeeklyCalendar
-        handlePrevWeek={setStartDate}
-        handleNextWeek={setEndDate}
-      />
-      {isFetchingStrava || (isLoadingWorkouts && <LoadingCenter />)}
+      <WorkoutWeeklyCalendar />
+      {isFetchingStrava && <LoadingCenter />}
     </>
   );
 }

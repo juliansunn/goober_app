@@ -14,25 +14,18 @@ import { format } from "date-fns";
 import { getWeekDates } from "@/utils/date-utils";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { WorkoutSkeleton } from "@/types";
-
-interface WorkoutWeeklyCalendarProps {
-  handlePrevWeek: (date: Date) => void;
-  handleNextWeek: (date: Date) => void;
-}
+import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 
 const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
-  return skeleton?.schedule.phases.find((phase) => {
+  return skeleton?.phases.find((phase) => {
     return phase.weeks.find((week) => {
       return week.startDate === date.toISOString();
     });
   });
 };
 
-export function WorkoutWeeklyCalendar({
-  handlePrevWeek,
-  handleNextWeek,
-}: WorkoutWeeklyCalendarProps) {
-  const { skeleton, generateSchedule } = useWorkout();
+export function WorkoutWeeklyCalendar() {
+  const { skeleton, generateSchedule } = useWorkoutForm();
   const today = new Date().toISOString();
   const weekDates = getWeekDates(today);
 
@@ -47,23 +40,15 @@ export function WorkoutWeeklyCalendar({
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => handlePrevWeek(weekDates[0])}
-          >
+          <Button variant="outline" size="icon">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <CardTitle>
-            Week {skeleton?.schedule.phases[0].weeks[0].weekNumber}
-          </CardTitle>
+          <CardTitle>Week {skeleton?.phases[0].weeks[0].weekNumber}</CardTitle>
           <Button variant="outline" size="icon" onClick={() => {}}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <CardDescription>
-          Description: {skeleton?.schedule.description}
-        </CardDescription>
+        <CardDescription>Description: {skeleton?.description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-7 gap-2">
@@ -82,10 +67,10 @@ export function WorkoutWeeklyCalendar({
       </CardContent>
       <CardFooter className="flex justify-between">
         <div>
-          <p>Focus: {skeleton?.schedule.phases[0].weeks[0].focus}</p>
+          <p>Focus: {skeleton?.phases[0].weeks[0].focus}</p>
           <p>
-            Planned Volume: {skeleton?.schedule.phases[0].weeks[0].volumeType}{" "}
-            {skeleton?.schedule.phases[0].weeks[0].volumeValue}
+            Planned Volume: {skeleton?.phases[0].weeks[0].volumeType}{" "}
+            {skeleton?.phases[0].weeks[0].volumeValue}
           </p>
         </div>
         <Button onClick={handleGenerateWorkouts}>Generate Workouts</Button>

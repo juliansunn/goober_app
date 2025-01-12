@@ -105,8 +105,12 @@ export function WorkoutBuilder({
 
   // Use useEffect to initialize the workout
   useEffect(() => {
-    initializeWorkout(existingWorkout);
-  }, [existingWorkout, initializeWorkout]);
+    if (existingWorkout) {
+      initializeWorkout(existingWorkout);
+      form.reset(existingWorkout);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingWorkout]);
 
   const handleSubmitWorkout = async (e: React.FormEvent) => {
     e.preventDefault();

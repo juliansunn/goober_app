@@ -17,12 +17,16 @@ interface DatePickerProps {
   date: Date | undefined;
   onDateChange: (date: Date | undefined) => void;
   placeholder?: string;
+  fromDate?: Date;
+  toDate?: Date;
 }
 
 export function DatePicker({
   date,
   onDateChange,
   placeholder = "Pick a date",
+  fromDate,
+  toDate,
 }: DatePickerProps) {
   return (
     <Popover>
@@ -44,6 +48,8 @@ export function DatePicker({
           selected={date}
           onSelect={onDateChange}
           initialFocus
+          fromDate={fromDate}
+          toDate={toDate}
         />
       </PopoverContent>
     </Popover>

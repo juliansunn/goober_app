@@ -1,6 +1,6 @@
 import z from "zod";
 
-import { DurationType } from "@/types/workouts";
+import { DurationType, WorkoutType } from "@/types/workouts";
 import { PhaseObjective, WeekFocus } from "@/types/skeleton";
 export const DurationTypeSchema = z
   .enum(Object.values(DurationType) as [DurationType, ...DurationType[]])
@@ -21,14 +21,24 @@ export const workoutSkeletonSchema = z.object({
       .describe(
         "Overall description of the training plan, including the athlete's experience level, goals, and any other relevant details.  This will be used to guide the generation of workouts."
       ),
-    startDate: z.string().describe("Training start date in YYYY-MM-DD format"),
+    startDate: z
+      .string()
+      .optional()
+      .describe("Training start date in YYYY-MM-DD format"),
     endDate: z
       .string()
+      .optional()
       .describe("Training end date in YYYY-MM-DD format, often the event date"),
 
     phases: z
       .array(
         z.object({
+          id: z
+            .number()
+            .optional()
+            .describe(
+              "The id of the phase. When creating a new workout schedule through the API, this should not be returned."
+            ),
           name: z
             .string()
             .describe(
@@ -41,6 +51,12 @@ export const workoutSkeletonSchema = z.object({
           weeks: z
             .array(
               z.object({
+                id: z
+                  .number()
+                  .optional()
+                  .describe(
+                    "The id of the week. When creating a new workout schedule through the API, this should not be returned."
+                  ),
                 weekNumber: z
                   .number()
                   .int()
@@ -62,4 +78,40 @@ export const workoutSkeletonSchema = z.object({
       )
       .describe("List of training phases making up the overall schedule"),
   }),
+});
+
+export const WorkoutScheduleFormDataSchema = z.object({
+  id: z
+    .number()
+    .optional()
+    .describe(
+      "The id of the workout skeleton. When creating a new workout schedule through the API, this should not be returned."
+    ),
+  scheduleTitle: z.string().describe("Title of the workout skeleton"),
+  startDate: z.string().describe("Training start date in YYYY-MM-DD format"),
+  raceDate: z
+    .string()
+    .describe("Training end date in YYYY-MM-DD format, often the event date"),
+  raceName: z.string().describe("The name of the race"),
+  raceType: z
+    .nativeEnum(WorkoutType)
+    .describe("The types of workouts to generate"),
+  raceDistance: z.string().describe("The distance of the race"),
+  customDistance: z.string().describe("The custom distance of the race"),
+  customDistanceUnit: z.string().describe("The unit of the custom distance"),
+  restDay: z.string().describe("The rest day of the race"),
+  experienceLevel: z.string().describe("The experience level of the athlete"),
+  goalTimeHours: z.string().describe("The goal time in hours"),
+  goalTimeMinutes: z.string().describe("The goal time in minutes"),
+  goalTimeSeconds: z.string().describe("The goal time in seconds"),
+  additionalNotes: z
+    .string()
+    .describe("Additional notes for the workout skeleton"),
+  schedule: workoutSkeletonSchema.shape.schedule,
+});
+
+export const WorkoutSkeletonFormDataSchema = z.object({
+  title: z.string().describe("Title of the workout skeleton"),
+  type: z.nativeEnum(WorkoutType).describe("The types of workouts to generate"),
+  schedule: workoutSkeletonSchema,
 });

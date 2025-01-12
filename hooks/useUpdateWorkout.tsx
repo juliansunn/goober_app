@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateWorkout } from "@/functions/workouts";
 import { UpdateWorkoutInput } from "@/schemas/workout-schema";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 export function useUpdateWorkout() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   return useMutation({
     mutationFn: ({
@@ -15,13 +16,19 @@ export function useUpdateWorkout() {
       workoutData: UpdateWorkoutInput;
     }) => updateWorkout(workoutId, workoutData),
     onSuccess: () => {
-      // Invalidate and refetch the workouts list
       queryClient.invalidateQueries({ queryKey: ["workouts"] });
-      toast.success("Workout updated successfully");
+      toast({
+        title: "Success",
+        description: "Workout updated successfully",
+      });
     },
     onError: (error) => {
       console.error("Error updating workout:", error);
-      toast.error("Failed to update the workout. Please try again.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update the workout. Please try again.",
+      });
     },
   });
 }

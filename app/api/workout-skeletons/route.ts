@@ -3,8 +3,8 @@ import { currentUser } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { getOrCreateUser } from "@/app/actions/user";
-import { workoutSkeletonSchema } from "@/schemas/skeleton";
-import { WorkoutSkeletonFormData } from "@/types/skeleton";
+import { WorkoutScheduleFormDataSchema } from "@/schemas/skeleton";
+import { WorkoutScheduleFormData } from "@/types/workout";
 
 export async function GET() {
   try {
@@ -19,16 +19,23 @@ export async function GET() {
       email: clerkUser.emailAddresses[0]?.emailAddress,
     });
 
-    const workoutSkeletons = await prisma.workoutSkeleton.findMany({
+    const workoutSchedules = await prisma.workoutSchedule.findMany({
       where: {
         userId: user.id,
+      },
+      include: {
+        phases: {
+          include: {
+            weeks: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return NextResponse.json(workoutSkeletons);
+    return NextResponse.json(workoutSchedules);
   } catch (error) {
     console.error("[WORKOUT_SKELETONS_GET]", error);
     return new NextResponse("Internal error", { status: 500 });
@@ -48,24 +55,29 @@ export async function POST(req: Request) {
       email: clerkUser.emailAddresses[0]?.emailAddress,
     });
 
-    const body: WorkoutSkeletonFormData = await req.json();
-    const title = body?.title;
-    const type = body?.type;
-    const validatedData = workoutSkeletonSchema.parse(body);
-    const schedule = {
-      title: title,
-      type: type,
-      ...validatedData.schedule,
-    };
+    const body: WorkoutScheduleFormData = await req.json();
+    const validatedData = WorkoutScheduleFormDataSchema.parse(body);
+    const schedule = validatedData.schedule;
 
-    const workoutSkeleton = await prisma.workoutSkeleton.create({
+    const workoutSchedule = await prisma.workoutSchedule.create({
       data: {
-        title: title,
-        type: type,
         userId: user.id,
+        scheduleTitle: validatedData.scheduleTitle,
+        startDate: new Date(validatedData.startDate),
+        raceDate: new Date(validatedData.raceDate),
+        raceName: validatedData.raceName,
+        raceType: validatedData.raceType,
+        raceDistance: validatedData.raceDistance,
+        customDistance: validatedData.customDistance,
+        customDistanceUnit: validatedData.customDistanceUnit,
+        restDay: validatedData.restDay,
+        experienceLevel: validatedData.experienceLevel,
+        goalTimeHours: validatedData.goalTimeHours,
+        goalTimeMinutes: validatedData.goalTimeMinutes,
+        goalTimeSeconds: validatedData.goalTimeSeconds,
+        additionalNotes: validatedData.additionalNotes,
+
         description: schedule.description,
-        startDate: new Date(schedule.startDate),
-        endDate: new Date(schedule.endDate),
         phases: {
           create: schedule.phases.map((phase) => ({
             name: phase.name,
@@ -88,10 +100,12 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json(workoutSkeleton);
+    return NextResponse.json(workoutSchedule);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new NextResponse("Invalid request data", { status: 400 });
+      return new NextResponse("Invalid request data: " + error.message, {
+        status: 400,
+      });
     }
 
     console.error("[WORKOUT_SKELETONS_POST]", error);

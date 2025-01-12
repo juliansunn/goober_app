@@ -9,7 +9,7 @@ import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 import { ScheduledWorkout, Workout } from "@/types/workouts";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,12 +45,14 @@ export function WorkoutCalendarComponent({
 
   const {
     calendarItems,
-    bulkCreateScheduledWorkouts,
-    clearGeneratedScheduledWorkouts,
-    generateSchedule,
+    // bulkCreateScheduledWorkouts,
+    // clearGeneratedScheduledWorkouts,
+    // generateSchedule,
   } = useWorkout();
 
   const queryClient = useQueryClient();
+
+  const { toast } = useToast();
 
   const createScheduledWorkoutMutation = useMutation({
     mutationFn: async ({
@@ -79,11 +81,18 @@ export function WorkoutCalendarComponent({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
-      toast.success("Workout scheduled successfully");
+      toast({
+        title: "Success",
+        description: "Workout scheduled successfully",
+      });
     },
     onError: (error) => {
       console.error("Error creating scheduled workout:", error);
-      toast.error("Failed to schedule workout");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to schedule workout",
+      });
     },
   });
 
@@ -108,12 +117,19 @@ export function WorkoutCalendarComponent({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
-      toast.success("Workout updated successfully");
+      toast({
+        title: "Success",
+        description: "Workout updated successfully",
+      });
       setIsEditingSidebar(false);
     },
     onError: (error) => {
       console.error("Error updating scheduled workout:", error);
-      toast.error("Failed to update workout");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update workout",
+      });
     },
   });
 
@@ -131,12 +147,19 @@ export function WorkoutCalendarComponent({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scheduledWorkouts"] });
-      toast.success("Workout deleted successfully");
+      toast({
+        title: "Success",
+        description: "Workout deleted successfully",
+      });
       setIsEditingSidebar(false);
     },
     onError: (error) => {
       console.error("Error deleting scheduled workout:", error);
-      toast.error("Failed to delete workout");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete workout",
+      });
     },
   });
 

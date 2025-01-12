@@ -1,46 +1,66 @@
 "use client";
 
-import React from "react";
-import { useWorkout } from "@/app/contexts/WorkoutContext";
-import { WorkoutSkeleton } from "./workoutSkeletonForm/WorkoutSkeleton";
-import { CreateSkeletonForm } from "./CreateSkeletonForm";
+import React, { useState } from "react";
+import { WorkoutScheduleForm } from "./workoutSkeletonForm/WorkoutScheduleForm";
 import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 import { AiLoading } from "./ui/AiLoading";
 import { TrainingPreferencesStep } from "./workoutSkeletonForm/TrainingPreferencesStep";
 import { RaceDetailsStep } from "./workoutSkeletonForm/RaceDetailsStep";
-
+import { Card, CardContent } from "./ui/card";
+import { Button } from "./ui/button";
+import { Separator } from "./ui/separator";
+import { Brain, PencilRuler } from "lucide-react";
+import { WorkoutScheduleFormData } from "@/types/workout";
+import { useRouter } from "next/navigation";
 export function WorkoutScheduleCreatorComponent() {
-  const { isLoadingScheduledWorkouts, isGeneratingSkeleton, skeleton } =
-    useWorkout();
+  const [step, setStep] = useState(0);
+  const { isLoadingScheduledWorkouts } = useWorkoutForm();
+  const [initialData, setInitialData] =
+    useState<WorkoutScheduleFormData | null>(null);
+  const router = useRouter();
+
   const {
-    step,
     formData,
     errors,
     showCustomDistance,
+    isGeneratingWorkoutSchedule,
+    skeleton,
     handleInputChange,
     handleSelectChange,
     handleDateChange,
-    handleNext,
-    handleBack,
     handleSubmit,
+    createWorkoutSchedule,
   } = useWorkoutForm();
 
-  const renderResult = () => {
-    if (!skeleton) return <CreateSkeletonForm onSubmit={() => {}} />;
-    return (
-      <WorkoutSkeleton
-        title={formData.scheduleTitle}
-        type={formData.raceType}
-        skeletonData={skeleton}
-      />
-    );
+  const handleManualCreate = () => {
+    setInitialData({
+      scheduleTitle: formData.scheduleTitle,
+      startDate: formData.startDate,
+      raceName: formData.raceName,
+      raceType: formData.raceType,
+      raceDistance: formData.raceDistance,
+      customDistance: formData.customDistance,
+      customDistanceUnit: formData.customDistanceUnit,
+      raceDate: formData.raceDate,
+      restDay: formData.restDay,
+      experienceLevel: formData.experienceLevel,
+      goalTimeHours: formData.goalTimeHours,
+      goalTimeMinutes: formData.goalTimeMinutes,
+      goalTimeSeconds: formData.goalTimeSeconds,
+      additionalNotes: formData.additionalNotes,
+    });
   };
 
-  if (isLoadingScheduledWorkouts || isGeneratingSkeleton) {
+  // Helper function to check if there are any actual errors
+  const hasValidationErrors = (errors: Record<string, string>) => {
+    return Object.values(errors).some((error) => error !== "");
+  };
+
+  if (isLoadingScheduledWorkouts || isGeneratingWorkoutSchedule) {
     return (
       <AiLoading
         loadingText={
-          isGeneratingSkeleton
+          isGeneratingWorkoutSchedule
             ? "Creating your personalized workout schedule..."
             : "Generating your workout schedule..."
         }
@@ -49,31 +69,79 @@ export function WorkoutScheduleCreatorComponent() {
   }
 
   if (skeleton) {
-    return renderResult();
+    return (
+      <WorkoutScheduleForm
+        initialData={{
+          scheduleTitle: formData.scheduleTitle,
+          startDate: formData.startDate,
+          raceName: formData.raceName,
+          raceType: formData.raceType,
+          raceDistance: formData.raceDistance,
+          customDistance: formData.customDistance,
+          customDistanceUnit: formData.customDistanceUnit,
+          raceDate: formData.raceDate,
+          restDay: formData.restDay,
+          experienceLevel: formData.experienceLevel,
+          goalTimeHours: formData.goalTimeHours,
+          goalTimeMinutes: formData.goalTimeMinutes,
+          goalTimeSeconds: formData.goalTimeSeconds,
+          additionalNotes: formData.additionalNotes,
+          schedule: skeleton,
+        }}
+      />
+    );
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      {step === 0 && (
-        <RaceDetailsStep
-          formData={formData}
-          errors={errors}
-          showCustomDistance={showCustomDistance}
-          onInputChange={handleInputChange}
-          onSelectChange={handleSelectChange}
-          onDateChange={handleDateChange}
-          onNext={handleNext}
-        />
-      )}
-      {step === 1 && (
-        <TrainingPreferencesStep
-          formData={formData}
-          errors={errors}
-          onInputChange={handleInputChange}
-          onSelectChange={handleSelectChange}
-          onBack={handleBack}
-          onSubmit={handleSubmit}
-        />
+    <div className="w-full max-w-4xl mx-auto space-y-8">
+      {step === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <RaceDetailsStep
+              formData={formData}
+              errors={errors}
+              showCustomDistance={showCustomDistance}
+              onInputChange={handleInputChange}
+              onSelectChange={handleSelectChange}
+              onDateChange={handleDateChange}
+              onNext={() => setStep(1)}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="pt-6">
+            <TrainingPreferencesStep
+              formData={formData}
+              errors={errors}
+              onInputChange={handleInputChange}
+              onSelectChange={handleSelectChange}
+              onBack={() => setStep(0)}
+            />
+
+            <Separator className="my-6" />
+
+            <div className="flex justify-between gap-4">
+              <Button
+                className="flex-1"
+                onClick={handleSubmit}
+                disabled={hasValidationErrors(errors)}
+              >
+                <Brain className="mr-2 h-4 w-4" />
+                Generate with AI
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleManualCreate}
+                disabled={hasValidationErrors(errors)}
+              >
+                <PencilRuler className="mr-2 h-4 w-4" />
+                Build Manually
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

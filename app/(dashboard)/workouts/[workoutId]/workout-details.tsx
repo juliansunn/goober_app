@@ -4,7 +4,6 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
 import { getWorkoutById } from "@/functions/workouts";
-import { Loader2 } from "lucide-react";
 import { ErrorDisplay } from "@/components/error-display";
 import { LoadingCenter } from "@/components/loading-center";
 
