@@ -104,6 +104,7 @@ export function PhaseView({
             </span>
             <Button
               variant="ghost"
+              type="button"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
             >

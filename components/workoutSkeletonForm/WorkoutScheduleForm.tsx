@@ -102,7 +102,7 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
       setIsSubmitting(true);
       if (data.id) {
         await updateWorkoutSchedule({ data });
-        toast.success("Workout schedule updated successfully");
+        toast.success("Workout schedule updated successfully sd;flkwjerpoi");
       } else {
         await createWorkoutSchedule(data);
         toast.success("Workout schedule created successfully");
@@ -180,7 +180,11 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
 
           <Button
             type="submit"
-            disabled={isSubmitting || phases.length === 0 || !isDirty}
+            disabled={
+              isSubmitting ||
+              phases.length === 0 ||
+              (initialData.id !== undefined && !isDirty)
+            }
             className="w-full"
           >
             {isSubmitting ? "Saving..." : "Save Workout Schedule"}
