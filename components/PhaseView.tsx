@@ -90,6 +90,7 @@ export function PhaseView({
             {onRemove && (
               <Button
                 variant="ghost"
+                type="button"
                 size="sm"
                 onClick={onRemove}
                 className="text-destructive"
