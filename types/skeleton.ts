@@ -27,7 +27,7 @@ export interface Phase {
   name: string;
   startDate: string;
   endDate: string;
-  objective: string;
+  objective: PhaseObjective;
   weeks: Week[];
 }
 

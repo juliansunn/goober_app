@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useForm } from "react-hook-form";
-import { Phase } from "@/types/skeleton";
+import { Phase, PhaseObjective } from "@/types/skeleton";
 import { useState, useEffect } from "react";
 import { addDays, isWithinInterval, format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -146,7 +146,7 @@ export function PhaseDialog({
       name: "",
       startDate: new Date().toISOString(),
       endDate: new Date().toISOString(),
-      objective: "",
+      objective: PhaseObjective.BASE,
       weeks: [],
     },
   });
