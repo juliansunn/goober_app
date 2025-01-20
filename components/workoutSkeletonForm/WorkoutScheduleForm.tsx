@@ -102,7 +102,7 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
       setIsSubmitting(true);
       if (data.id) {
         await updateWorkoutSchedule({ data });
-        toast.success("Workout schedule updated successfully sd;flkwjerpoi");
+        toast.success("Workout schedule updated successfully");
       } else {
         await createWorkoutSchedule(data);
         toast.success("Workout schedule created successfully");
@@ -151,30 +151,32 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
                 </p>
               </div>
             ) : (
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {phases.map((phase, index) => (
-                    <CarouselItem key={phase.id}>
-                      <PhaseView
-                        phase={phase}
-                        phaseIndex={index}
-                        totalPhases={phases.length}
-                        onUpdate={(updatedPhase) => {
-                          const values = form.getValues();
-                          const updatedPhases = [
-                            ...(values.schedule?.phases ?? []),
-                          ];
-                          updatedPhases[index] = updatedPhase;
-                          form.setValue("schedule.phases", updatedPhases);
-                        }}
-                        onRemove={() => removePhase(index)}
-                      />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
+              <div className="relative w-full px-4">
+                <Carousel className="w-full mx-auto">
+                  <CarouselContent>
+                    {phases.map((phase, index) => (
+                      <CarouselItem key={phase.id}>
+                        <PhaseView
+                          phase={phase}
+                          phaseIndex={index}
+                          totalPhases={phases.length}
+                          onUpdate={(updatedPhase) => {
+                            const values = form.getValues();
+                            const updatedPhases = [
+                              ...(values.schedule?.phases ?? []),
+                            ];
+                            updatedPhases[index] = updatedPhase;
+                            form.setValue("schedule.phases", updatedPhases);
+                          }}
+                          onRemove={() => removePhase(index)}
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-[-1rem]" />
+                  <CarouselNext className="right-[-1rem]" />
+                </Carousel>
+              </div>
             )}
           </div>
 
