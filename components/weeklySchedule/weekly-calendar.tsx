@@ -1,21 +1,26 @@
 "use client";
 
-import { format, eachDayOfInterval, parseISO } from "date-fns";
+import { format } from "date-fns";
+import { getWeekDates } from "@/utils/date-utils";
+import { WorkoutSkeleton } from "@/types";
 import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 import { Week } from "@/types/skeleton";
+
+const findPhaseAndWeekForDate = (skeleton: WorkoutSkeleton, date: Date) => {
+  return skeleton?.phases.find((phase) => {
+    return phase.weeks.find((week) => {
+      return week.startDate === date.toISOString();
+    });
+  });
+};
 
 interface WeeklyCalendarProps {
   week: Week;
 }
 
 export function WorkoutWeeklyCalendar({ week }: WeeklyCalendarProps) {
-  const { generateSchedule } = useWorkoutForm();
-
-  // Generate array of dates between start and end date
-  const weekDates = eachDayOfInterval({
-    start: parseISO(week.startDate),
-    end: parseISO(week.endDate),
-  });
+  const today = new Date().toISOString();
+  const weekDates = getWeekDates(today);
 
   return (
     <div className="grid grid-cols-7 gap-2 w-full mx-auto">

@@ -3,10 +3,14 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Week, WorkoutSkeletonFormData } from "../types/skeleton";
+import {
+  PhaseObjective,
+  Week,
+  WorkoutSkeletonFormData,
+} from "../types/skeleton";
 import { format } from "date-fns";
 import { Badge } from "./ui/badge";
-import { Edit2, Save } from "lucide-react";
+import { Edit2, Save, ChevronUp, ChevronDown } from "lucide-react";
 import { WeekFormSection } from "./workoutSkeletonForm/WeekFormSection";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
@@ -17,6 +21,9 @@ interface WeekViewProps {
   week: Week;
   weekIndex: number;
   phaseIndex: number;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMoveWeek?: (direction: "up" | "down") => void;
   onUpdate?: (updatedWeek: Week) => void;
 }
 
@@ -24,6 +31,9 @@ export function WeekView({
   week,
   weekIndex,
   phaseIndex,
+  canMoveUp,
+  canMoveDown,
+  onMoveWeek,
   onUpdate,
 }: WeekViewProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -38,7 +48,7 @@ export function WeekView({
           endDate: "",
           weeks: [week],
           name: "",
-          objective: "",
+          objective: PhaseObjective.BASE,
         },
       ],
     },
@@ -77,18 +87,44 @@ export function WeekView({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex justify-between items-center">
-          <span>Week {week.weekNumber}</span>
-          {onUpdate && (
-            <Button
-              variant="ghost"
-              type="button"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Edit2 className="h-4 w-4" />
-            </Button>
-          )}
+        <CardTitle className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span>Week {week.weekNumber}</span>
+            {onUpdate && (
+              <Button
+                variant="ghost"
+                type="button"
+                size="sm"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {canMoveUp && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onMoveWeek?.("up")}
+                className="text-muted-foreground flex items-center gap-2"
+              >
+                Move to Phase {phaseIndex}
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+            )}
+            {canMoveDown && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onMoveWeek?.("down")}
+                className="text-muted-foreground flex items-center gap-2"
+              >
+                Move to Phase {phaseIndex + 2}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
