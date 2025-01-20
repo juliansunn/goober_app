@@ -60,11 +60,6 @@ const data = {
         { icon: Calendar, label: "All Schedules", href: "/schedules" },
         { icon: PlusCircle, label: "Create", href: "/schedules/create" },
         { icon: Calendar, label: "Calendar", href: "/schedules/calendar" },
-        {
-          icon: CalendarCogIcon,
-          label: "Weekly",
-          href: "/schedules/weekly-calendar",
-        },
       ],
     },
     {
