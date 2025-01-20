@@ -8,6 +8,8 @@ import { RaceDistanceSelect } from "./form-fields/RaceDistanceSelect";
 import { CustomDistanceInput } from "./form-fields/CustomDistanceInput";
 import { WorkoutScheduleFormData, FormErrors } from "@/types/workout";
 import { WorkoutType } from "@/types/workouts";
+import { addMonths } from "date-fns";
+import { DatePicker } from "../ui/date-picker";
 
 interface RaceDetailsStepProps {
   formData: WorkoutScheduleFormData;
@@ -28,6 +30,7 @@ export function RaceDetailsStep({
   onDateChange,
   onNext,
 }: RaceDetailsStepProps) {
+  console.log("formData", formData);
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold">Race Details</h3>
@@ -47,13 +50,16 @@ export function RaceDetailsStep({
         />
       </FormField>
 
-      <DatePickerField
-        id="startDate"
-        label="Start Date"
-        date={new Date(formData.startDate)}
-        onDateChange={onDateChange}
-        fieldName="startDate"
-      />
+      <div>
+        <label className="text-sm font-medium">Start Date</label>
+        <DatePicker
+          date={new Date(formData.startDate)}
+          onDateChange={(date) => {
+            onDateChange("startDate", date ?? null);
+          }}
+          placeholder="Select start date"
+        />
+      </div>
 
       <FormField id="raceName" label="Race Name" error={errors.raceName}>
         <Input
@@ -90,15 +96,16 @@ export function RaceDetailsStep({
           onUnitChange={(value) => onSelectChange("customDistanceUnit", value)}
         />
       )}
-
-      <DatePickerField
-        id="raceDate"
-        label="Race Date"
-        date={new Date(formData.raceDate)}
-        error={errors.raceDate}
-        onDateChange={onDateChange}
-        fieldName="raceDate"
-      />
+      <div>
+        <label className="text-sm font-medium">Race Date</label>
+        <DatePicker
+          date={formData.raceDate ? new Date(formData.raceDate) : new Date()}
+          onDateChange={(date) => {
+            onDateChange("raceDate", date ?? null);
+          }}
+          // fromDate={addMonths(new Date(formData.startDate), 1)}
+        />
+      </div>
 
       <div className="flex justify-end">
         <Button onClick={onNext}>Next</Button>

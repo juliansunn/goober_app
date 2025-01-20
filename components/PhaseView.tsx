@@ -90,6 +90,7 @@ export function PhaseView({
             {onRemove && (
               <Button
                 variant="ghost"
+                type="button"
                 size="sm"
                 onClick={onRemove}
                 className="text-destructive"
@@ -104,6 +105,7 @@ export function PhaseView({
             </span>
             <Button
               variant="ghost"
+              type="button"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
             >

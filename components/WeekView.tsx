@@ -11,6 +11,7 @@ import { WeekFormSection } from "./workoutSkeletonForm/WeekFormSection";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
 import { WorkoutType } from "../types/workouts";
+import { WorkoutWeeklyCalendar } from "./weeklySchedule/weekly-calendar";
 
 interface WeekViewProps {
   week: Week;
@@ -81,6 +82,7 @@ export function WeekView({
           {onUpdate && (
             <Button
               variant="ghost"
+              type="button"
               size="sm"
               onClick={() => setIsEditing(true)}
             >
@@ -101,11 +103,7 @@ export function WeekView({
         <p className="text-sm mb-2">
           <strong>Planned Volume:</strong> {week.volumeValue} {week.volumeType}
         </p>
-        <Link href={`/generate-workouts/${week.weekNumber}`} passHref>
-          <Button className="w-full" size="sm">
-            View Weekly Schedule
-          </Button>
-        </Link>
+        <WorkoutWeeklyCalendar week={week} />
       </CardContent>
     </Card>
   );

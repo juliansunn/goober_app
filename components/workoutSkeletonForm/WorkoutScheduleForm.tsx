@@ -3,7 +3,6 @@
 import { useForm, useFieldArray, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -151,36 +150,42 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
                 </p>
               </div>
             ) : (
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {phases.map((phase, index) => (
-                    <CarouselItem key={phase.id}>
-                      <PhaseView
-                        phase={phase}
-                        phaseIndex={index}
-                        totalPhases={phases.length}
-                        onUpdate={(updatedPhase) => {
-                          const values = form.getValues();
-                          const updatedPhases = [
-                            ...(values.schedule?.phases ?? []),
-                          ];
-                          updatedPhases[index] = updatedPhase;
-                          form.setValue("schedule.phases", updatedPhases);
-                        }}
-                        onRemove={() => removePhase(index)}
-                      />
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
-              </Carousel>
+              <div className="relative w-full px-4">
+                <Carousel className="w-full mx-auto">
+                  <CarouselContent>
+                    {phases.map((phase, index) => (
+                      <CarouselItem key={phase.id}>
+                        <PhaseView
+                          phase={phase}
+                          phaseIndex={index}
+                          totalPhases={phases.length}
+                          onUpdate={(updatedPhase) => {
+                            const values = form.getValues();
+                            const updatedPhases = [
+                              ...(values.schedule?.phases ?? []),
+                            ];
+                            updatedPhases[index] = updatedPhase;
+                            form.setValue("schedule.phases", updatedPhases);
+                          }}
+                          onRemove={() => removePhase(index)}
+                        />
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="left-[-1rem]" />
+                  <CarouselNext className="right-[-1rem]" />
+                </Carousel>
+              </div>
             )}
           </div>
 
           <Button
             type="submit"
-            disabled={isSubmitting || phases.length === 0 || !isDirty}
+            disabled={
+              isSubmitting ||
+              phases.length === 0 ||
+              (initialData.id !== undefined && !isDirty)
+            }
             className="w-full"
           >
             {isSubmitting ? "Saving..." : "Save Workout Schedule"}
