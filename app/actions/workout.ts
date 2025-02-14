@@ -92,22 +92,6 @@ export async function createWorkout(
   });
 }
 
-export async function createScheduledWorkout(
-  userId: number,
-  workoutId: number,
-  scheduledAt: Date,
-  notes: string
-) {
-  return await prisma.scheduledWorkout.create({
-    data: {
-      userId,
-      workoutId,
-      scheduledAt,
-      notes,
-    },
-  });
-}
-
 export async function createScheduleWorkouts(
   userId: number,
   scheduledWorkouts: GeneratedScheduledWorkout[]
