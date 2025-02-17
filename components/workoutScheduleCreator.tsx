@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import { WorkoutScheduleForm } from "./workoutSkeletonForm/WorkoutScheduleForm";
 import { useWorkoutForm } from "@/hooks/useWorkoutForm";
-import { AiLoading } from "./ui/AiLoading";
-import { TrainingPreferencesStep } from "./workoutSkeletonForm/TrainingPreferencesStep";
-import { RaceDetailsStep } from "./workoutSkeletonForm/RaceDetailsStep";
-import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
-import { Brain, PencilRuler } from "lucide-react";
 import { WorkoutScheduleFormData } from "@/types/workout";
+import { Brain, PencilRuler } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { AiLoading } from "./ui/AiLoading";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Separator } from "./ui/separator";
+import { RaceDetailsStep } from "./workoutSkeletonForm/RaceDetailsStep";
+import { TrainingPreferencesStep } from "./workoutSkeletonForm/TrainingPreferencesStep";
+import { WorkoutScheduleForm } from "./workoutSkeletonForm/WorkoutScheduleForm";
 export function WorkoutScheduleCreatorComponent() {
   const [step, setStep] = useState(0);
   const { isLoadingScheduledWorkouts } = useWorkoutForm();
@@ -29,7 +29,6 @@ export function WorkoutScheduleCreatorComponent() {
     handleSelectChange,
     handleDateChange,
     handleSubmit,
-    createWorkoutSchedule,
   } = useWorkoutForm();
 
   const handleManualCreate = () => {

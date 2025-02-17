@@ -1,25 +1,23 @@
 "use client";
 
+import { formatDateString } from "@/utils/date-utils";
+import { ChevronDown, ChevronUp, Edit2, Save } from "lucide-react";
 import { useState } from "react";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { useForm } from "react-hook-form";
 import {
   PhaseObjective,
   Week,
   WorkoutSkeletonFormData,
 } from "../types/skeleton";
-import { format } from "date-fns";
-import { Badge } from "./ui/badge";
-import { Edit2, Save, ChevronUp, ChevronDown } from "lucide-react";
-import { WeekFormSection } from "./workoutSkeletonForm/WeekFormSection";
-import { useForm } from "react-hook-form";
-import Link from "next/link";
 import { WorkoutType } from "../types/workouts";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { WorkoutWeeklyCalendar } from "./weeklySchedule/weekly-calendar";
+import { WeekFormSection } from "./workoutSkeletonForm/WeekFormSection";
 
 interface WeekViewProps {
   week: Week;
-  weekIndex: number;
   phaseIndex: number;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
@@ -29,7 +27,6 @@ interface WeekViewProps {
 
 export function WeekView({
   week,
-  weekIndex,
   phaseIndex,
   canMoveUp,
   canMoveDown,
@@ -53,10 +50,6 @@ export function WeekView({
       ],
     },
   });
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "MMMM d, yyyy");
-  };
 
   const handleSave = (data: any) => {
     if (onUpdate) {
@@ -129,7 +122,7 @@ export function WeekView({
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground mb-1">
-          {formatDate(week.startDate)} - {formatDate(week.endDate)}
+          {formatDateString(week.startDate)} - {formatDateString(week.endDate)}
         </p>
         <div className="flex items-center gap-2 mb-1">
           <span className="text-sm">Focus:</span>

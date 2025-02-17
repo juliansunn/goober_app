@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useWorkoutForm } from "@/hooks/useWorkoutForm";
 import { WorkoutScheduleFormDataSchema } from "@/schemas/skeleton";
-import { PhaseObjective } from "@/types/skeleton";
 import { WorkoutScheduleFormData } from "@/types/workout";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -25,8 +24,6 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
     {}
   );
   const { createWorkoutSchedule, updateWorkoutSchedule } = useWorkoutForm();
-  console.log(initialData);
-
   const form = useForm<WorkoutScheduleFormData>({
     resolver: zodResolver(WorkoutScheduleFormDataSchema),
     defaultValues: {
@@ -80,17 +77,6 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
 
   const { isDirty } = form.formState;
 
-  const handleAddPhase = () => {
-    const formValues = form.getValues();
-    appendPhase({
-      name: `Phase ${phases.length + 1}`,
-      startDate: formValues.startDate,
-      endDate: formValues.raceDate,
-      objective: PhaseObjective.BASE,
-      weeks: [],
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = form.getValues();
@@ -118,7 +104,6 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
   const handleWeekMove = (
     fromPhaseIndex: number,
     toPhaseIndex: number,
-    weekIndex: number,
     direction: "up" | "down"
   ) => {
     const values = form.getValues();
@@ -241,21 +226,10 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
                           [index]: !prev[index],
                         }));
                       }}
-                      previousPhase={index > 0 ? phases[index - 1] : undefined}
-                      nextPhase={
-                        index < phases.length - 1
-                          ? phases[index + 1]
-                          : undefined
-                      }
                       onMoveWeek={(weekIndex, direction) => {
                         const toPhaseIndex =
                           direction === "up" ? index - 1 : index + 1;
-                        handleWeekMove(
-                          index,
-                          toPhaseIndex,
-                          weekIndex,
-                          direction
-                        );
+                        handleWeekMove(index, toPhaseIndex, direction);
                       }}
                     />
                   ))}

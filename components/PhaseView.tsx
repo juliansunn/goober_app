@@ -1,16 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Phase, PhaseObjective } from "@/types/skeleton";
+import { formatDateString } from "@/utils/date-utils";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
-import { WeekView } from "./WeekView";
-import { ChevronDown, ChevronUp, Trash2, ListIcon } from "lucide-react";
-import { format, addDays } from "date-fns";
-import { Phase } from "@/types/skeleton";
-import { Input } from "./ui/input";
-import { DatePicker } from "./ui/date-picker";
-import { Form } from "./ui/form";
-import { useForm } from "react-hook-form";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
   Select,
   SelectContent,
@@ -18,15 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { PhaseObjective } from "@/types/skeleton";
+import { WeekView } from "./WeekView";
 
 interface PhaseViewProps {
-  scheduleId?: number;
   phase: Phase;
   phaseIndex: number;
   totalPhases: number;
-  previousPhase?: Phase;
-  nextPhase?: Phase;
   onUpdate?: (updatedPhase: Phase) => void;
   onRemove?: () => void;
   isExpanded: boolean;
@@ -35,22 +26,15 @@ interface PhaseViewProps {
 }
 
 export function PhaseView({
-  scheduleId,
   phase,
   phaseIndex,
   totalPhases,
-  previousPhase,
-  nextPhase,
   onUpdate,
   onRemove,
   isExpanded,
   onExpandToggle,
   onMoveWeek,
 }: PhaseViewProps) {
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "MMM d, yyyy");
-  };
-
   return (
     <Card className="w-full">
       <CardHeader className="space-y-4">
@@ -64,7 +48,8 @@ export function PhaseView({
           </span>
           <div className="h-4 w-[1px] bg-border" />
           <span className="text-sm text-muted-foreground">
-            {formatDate(phase.startDate)} - {formatDate(phase.endDate)}
+            {formatDateString(phase.startDate)} -{" "}
+            {formatDateString(phase.endDate)}
           </span>
         </div>
 
@@ -140,7 +125,6 @@ export function PhaseView({
               <WeekView
                 key={week.weekNumber}
                 week={week}
-                weekIndex={weekIndex}
                 phaseIndex={phaseIndex}
                 canMoveUp={weekIndex === 0 && phaseIndex > 0}
                 canMoveDown={
