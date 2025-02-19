@@ -1,9 +1,11 @@
-import OpenAI from "openai";
-import { NextResponse } from "next/server";
-import { z } from "zod";
 import { workoutSkeletonSchema } from "@/schemas/skeleton";
+import { generateWeekDatesFromStartAndEndDate } from "@/utils/date-utils";
+import fs from "fs/promises";
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod.mjs";
-
+import path from "path";
+import { z } from "zod";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -22,23 +24,23 @@ export async function POST(req: Request) {
 
     const parsedPrompt = JSON.parse(prompt);
 
-    const systemPrompt = `You are an experienced endurance coach specializing in creating personalized training plans. Your task is to generate a high-level training plan skeleton in JSON format, based on the user's provided information. The plan should be tailored to their experience level, goals, and race details.
+    const promptTemplate = await fs.readFile(
+      path.join(process.cwd(), "prompts", "skeleton", "v0.0.1.txt"),
+      "utf-8"
+    );
 
-    Instructions:
-    1. Create a training plan that starts from ${parsedPrompt.startDate} and ends on ${parsedPrompt.raceDate}.
-    2. Divide the training period into appropriate phases (Base, Build, Peak, Taper).
-    3. For each phase:
-       - Define clear objectives
-       - Break down into weeks
-       - Specify weekly focus and intensity distribution
-       - Create placeholder workouts (3-6 per week)
-    4. Consider the user's:
-       - Experience level: ${parsedPrompt.experienceLevel}
-       - Race type: ${parsedPrompt.raceType}
-       - Race distance: ${parsedPrompt.raceDistance}
-       - Goal time: ${parsedPrompt.goalTime || "Not specified"}
-    
-    The schedule should follow proper periodization principles and gradually build intensity and volume appropriate to the user's level and goals.`;
+    const weeks = generateWeekDatesFromStartAndEndDate(
+      parsedPrompt.startDate,
+      parsedPrompt.raceDate
+    );
+
+    const systemPrompt = promptTemplate
+      .replace("{weeks}", JSON.stringify(weeks))
+      .replace("{experienceLevel}", parsedPrompt.experienceLevel)
+      .replace("{raceType}", parsedPrompt.raceType)
+      .replace("{raceDistance}", parsedPrompt.raceDistance)
+      .replace("{goalTime}", parsedPrompt.goalTime || "Not specified")
+      .replace("{additionalNotes}", parsedPrompt.additionalNotes || "None");
 
     try {
       const completion = await openai.beta.chat.completions.parse({

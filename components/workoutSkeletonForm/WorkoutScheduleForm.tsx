@@ -1,26 +1,18 @@
 "use client";
 
-import { useForm, useFieldArray, Control } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { toast } from "sonner";
-import { useState } from "react";
-import { WorkoutScheduleFormData } from "@/types/workout";
-import { BasicDetailsSection } from "./BasicDetailsSection";
-import { PhaseView } from "../PhaseView";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "../ui/carousel";
-import { format } from "date-fns";
-import { PhaseDialog } from "./PhaseDialog";
-import { WorkoutScheduleFormDataSchema } from "@/schemas/skeleton";
 import { useWorkoutForm } from "@/hooks/useWorkoutForm";
-import { PhaseObjective } from "@/types/skeleton";
+import { WorkoutScheduleFormDataSchema } from "@/schemas/skeleton";
+import { WorkoutScheduleFormData } from "@/types/workout";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
+import { useState } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { PhaseView } from "../PhaseView";
+import { BasicDetailsSection } from "./BasicDetailsSection";
+import { PhaseDialog } from "./PhaseDialog";
 
 interface WorkoutSkeletonFormProps {
   initialData: WorkoutScheduleFormData;
@@ -32,8 +24,6 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
     {}
   );
   const { createWorkoutSchedule, updateWorkoutSchedule } = useWorkoutForm();
-  console.log(initialData);
-
   const form = useForm<WorkoutScheduleFormData>({
     resolver: zodResolver(WorkoutScheduleFormDataSchema),
     defaultValues: {
@@ -87,17 +77,6 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
 
   const { isDirty } = form.formState;
 
-  const handleAddPhase = () => {
-    const formValues = form.getValues();
-    appendPhase({
-      name: `Phase ${phases.length + 1}`,
-      startDate: formValues.startDate,
-      endDate: formValues.raceDate,
-      objective: PhaseObjective.BASE,
-      weeks: [],
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = form.getValues();
@@ -125,7 +104,6 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
   const handleWeekMove = (
     fromPhaseIndex: number,
     toPhaseIndex: number,
-    weekIndex: number,
     direction: "up" | "down"
   ) => {
     const values = form.getValues();
@@ -248,21 +226,10 @@ export function WorkoutScheduleForm({ initialData }: WorkoutSkeletonFormProps) {
                           [index]: !prev[index],
                         }));
                       }}
-                      previousPhase={index > 0 ? phases[index - 1] : undefined}
-                      nextPhase={
-                        index < phases.length - 1
-                          ? phases[index + 1]
-                          : undefined
-                      }
                       onMoveWeek={(weekIndex, direction) => {
                         const toPhaseIndex =
                           direction === "up" ? index - 1 : index + 1;
-                        handleWeekMove(
-                          index,
-                          toPhaseIndex,
-                          weekIndex,
-                          direction
-                        );
+                        handleWeekMove(index, toPhaseIndex, direction);
                       }}
                     />
                   ))}

@@ -1,27 +1,27 @@
-import { useState } from "react";
-import { WorkoutScheduleFormData, FormErrors } from "@/types/workout";
+import { getScheduledWorkoutsList } from "@/functions/scheduled-workouts";
+import {
+  create,
+  deleteScheduledWorkout,
+  getAll,
+  getById,
+  update,
+} from "@/functions/workout-schedules";
+import { useToast } from "@/hooks/use-toast";
+import { WorkoutSkeleton } from "@/types";
+import { FormErrors, WorkoutScheduleFormData } from "@/types/workout";
 import {
   GeneratedScheduledWorkout,
   ScheduledWorkout,
   WorkoutType,
 } from "@/types/workouts";
 import {
+  formatGoalTime,
   validateScheduleStep,
   validateTimeInput,
-  formatGoalTime,
 } from "@/utils/workout-validation";
-import { WorkoutSkeleton } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getScheduledWorkoutsList } from "@/functions/scheduled-workouts";
-import {
-  getAll,
-  getById,
-  create,
-  update,
-  deleteScheduledWorkout,
-} from "@/functions/workout-schedules";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const initialFormData: WorkoutScheduleFormData = {
   scheduleTitle: "",
@@ -122,39 +122,6 @@ export const useWorkoutForm = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to generate workout schedule skeleton",
-      });
-    },
-  });
-
-  const generateScheduleMutation = useMutation({
-    mutationFn: async (formData: any) => {
-      const response = await fetch("/api/generate-schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: JSON.stringify(formData) }),
-      });
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to generate workout schedule: ${errorText}`);
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(
-        ["generated-schedules"],
-        data?.scheduledWorkouts || []
-      );
-      toast({
-        title: "Success",
-        description: "Workout schedule generated successfully!",
-      });
-    },
-    onError: (error) => {
-      console.error("Error generating workout schedule:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate workout schedule",
       });
     },
   });
@@ -387,7 +354,6 @@ export const useWorkoutForm = () => {
     handleSubmit,
 
     // Actions
-    generateSchedule: generateScheduleMutation.mutate,
     bulkCreateScheduledWorkouts: bulkCreateScheduledWorkoutsMutation.mutate,
     saveWorkoutSchedule: workoutScheduleMutation.mutate,
     loadSchedule: (id: number) => {

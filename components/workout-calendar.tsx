@@ -1,18 +1,10 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment from "moment";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
-import { ScheduledWorkout, Workout } from "@/types/workouts";
 import { useWorkout } from "@/app/contexts/WorkoutContext";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -20,10 +12,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkoutBuilder } from "@/components/workoutBuilder/workout-builder";
+import { useToast } from "@/hooks/use-toast";
+import { ScheduledWorkout, Workout } from "@/types/workouts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import moment from "moment";
+import { useCallback, useState } from "react";
+import { Calendar, momentLocalizer } from "react-big-calendar";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { CalendarItem, StravaActivity } from "@/types";
 
 const localizer = momentLocalizer(moment);
 
@@ -47,7 +46,6 @@ export function WorkoutCalendarComponent({
     calendarItems,
     // bulkCreateScheduledWorkouts,
     // clearGeneratedScheduledWorkouts,
-    // generateSchedule,
   } = useWorkout();
 
   const queryClient = useQueryClient();

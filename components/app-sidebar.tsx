@@ -210,7 +210,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
           <div className="flex space-x-2">
             <ClerkLoaded>
-              <UserButton showName afterSignOutUrl="/landing" />
+              <UserButton showName afterSignOutUrl="/sign-in" />
             </ClerkLoaded>
             <ClerkLoading>
               <Loader2 className="size-6 animate-spin text-slate-400" />
