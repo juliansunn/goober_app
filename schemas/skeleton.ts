@@ -1,7 +1,7 @@
 import z from "zod";
 
-import { DurationType, WorkoutType } from "@/types/workouts";
 import { PhaseObjective, WeekFocus } from "@/types/skeleton";
+import { DurationType, WorkoutType } from "@/types/workouts";
 export const DurationTypeSchema = z
   .enum(Object.values(DurationType) as [DurationType, ...DurationType[]])
   .describe("Numeric value of planned training volume (e.g., 30)");
@@ -46,6 +46,11 @@ export const workoutSkeletonSchema = z.object({
             ),
           startDate: z.string().describe("Phase start date (YYYY-MM-DD)"),
           endDate: z.string().describe("Phase end date (YYYY-MM-DD)"),
+          description: z
+            .string()
+            .describe(
+              "1-2 sentence description providing additional guidance for this phase"
+            ),
           objective: PhaseObjectiveSchema,
 
           weeks: z
@@ -69,8 +74,19 @@ export const workoutSkeletonSchema = z.object({
                   .describe(
                     "1-2 sentence description providing additional guidance for this week"
                   ),
-                volumeValue: z.number().describe("Planned volume value"),
-                volumeType: DurationTypeSchema,
+                volumeDistance: z
+                  .object({
+                    value: z.number().describe("Planned distance value"),
+                    unit: z
+                      .enum(["km", "miles"])
+                      .describe("Distance unit (km or miles)"),
+                  })
+                  .describe("Planned volume in distance"),
+                volumeDuration: z
+                  .object({
+                    minutes: z.number().describe("Planned duration in minutes"),
+                  })
+                  .describe("Planned volume in minutes"),
               })
             )
             .describe("List of weeks in this phase with minimal details"),

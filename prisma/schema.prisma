@@ -185,8 +185,8 @@ model Week {
   endDate           DateTime
   focus             WeekFocus
   description       String
-  volumeValue       Float
-  volumeType        DurationType
+  volumeDistance    Json // For storing {value: number, unit: string}
+  volumeDuration    Json // For storing {minutes: number}
   Phase             Phase?             @relation(fields: [phaseId], references: [id])
   phaseId           Int?
   scheduledWorkouts ScheduledWorkout[]
