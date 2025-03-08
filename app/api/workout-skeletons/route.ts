@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import prisma from "@/lib/prisma";
-import { z } from "zod";
 import { getOrCreateUser } from "@/app/actions/user";
+import prisma from "@/lib/prisma";
 import { WorkoutScheduleFormDataSchema } from "@/schemas/skeleton";
 import { WorkoutScheduleFormData } from "@/types/workout";
+import { currentUser } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 export async function GET() {
   try {
@@ -91,8 +91,8 @@ export async function POST(req: Request) {
                 endDate: new Date(week.endDate),
                 focus: week.focus,
                 description: week.description,
-                volumeValue: week.volumeValue,
-                volumeType: week.volumeType,
+                volumeDistance: week.volumeDistance,
+                volumeDuration: week.volumeDuration,
               })),
             },
           })),

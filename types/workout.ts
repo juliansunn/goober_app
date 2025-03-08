@@ -18,6 +18,7 @@ export type WorkoutScheduleFormData = {
   customDistanceUnit: string;
   restDay: string | null;
   experienceLevel: string;
+  goalTime: string;
   goalTimeHours: string;
   goalTimeMinutes: string;
   goalTimeSeconds: string;

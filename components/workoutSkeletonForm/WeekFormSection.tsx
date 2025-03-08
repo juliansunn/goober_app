@@ -1,6 +1,8 @@
 "use client";
 
-import { Control } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   FormControl,
   FormField,
@@ -9,12 +11,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DatePicker } from "@/components/ui/date-picker";
-import { WorkoutSkeletonFormData, WeekFocus } from "@/types/skeleton";
-import { DurationType } from "@/types/workouts";
-import { Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { WeekFocus, WorkoutSkeletonFormData } from "@/types/skeleton";
+import { DurationType } from "@/types/workouts";
+import { Trash2 } from "lucide-react";
+import { Control } from "react-hook-form";
 
 interface WeekFormSectionProps {
   phaseIndex: number;
@@ -134,7 +134,7 @@ export function WeekFormSection({
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={control}
-            name={`phases.${phaseIndex}.weeks.${weekIndex}.volumeValue`}
+            name={`phases.${phaseIndex}.weeks.${weekIndex}.volumeDistance`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Volume</FormLabel>
@@ -142,7 +142,13 @@ export function WeekFormSection({
                   <Input
                     type="number"
                     {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                    value={field.value.value}
+                    onChange={(e) =>
+                      field.onChange({
+                        value: Number(e.target.value),
+                        unit: field.value.unit,
+                      })
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -152,13 +158,13 @@ export function WeekFormSection({
 
           <FormField
             control={control}
-            name={`phases.${phaseIndex}.weeks.${weekIndex}.volumeType`}
+            name={`phases.${phaseIndex}.weeks.${weekIndex}.volumeDuration`}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Volume Type</FormLabel>
                 <Select
                   onValueChange={field.onChange}
-                  defaultValue={field.value}
+                  defaultValue={field.value.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>

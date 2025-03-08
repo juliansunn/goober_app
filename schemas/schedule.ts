@@ -1,11 +1,11 @@
 import z from "zod";
 
 import {
+  DurationType,
+  DurationUnit,
+  IntensityType,
   IntervalType,
   WorkoutType,
-  DurationType,
-  IntensityType,
-  DurationUnit,
 } from "@/types/workouts";
 
 // Define Zod schemas for enums
@@ -28,13 +28,31 @@ export const IntensityTypeSchema = z.enum(
 const singleIntervalSchema = z.object({
   id: z.number().int(),
   order: z.number().int(),
-  type: IntervalTypeSchema,
+  intervalType: IntervalTypeSchema,
   durationType: DurationTypeSchema,
   durationValue: z.number(),
   durationUnit: DurationUnitSchema,
   intensityType: IntensityTypeSchema,
   intensityMin: z.string(),
   intensityMax: z.string(),
+});
+
+export const workoutItemSchema = z.object({
+  order: z.number().int(),
+  type: z.enum(["interval", "repeatGroup"]).describe("The type of the item"), // Define valid types explicitly
+  id: z.number().int().describe("The unique identifier of the item"),
+  interval: singleIntervalSchema
+    .optional()
+    .describe("The interval of the item. Only present if the type is interval"), // Optional, only if type is "interval"
+  repeatGroup: z
+    .object({
+      intervals: z.array(singleIntervalSchema),
+      repeats: z.number().int(),
+    })
+    .optional()
+    .describe(
+      "The repeat group of the item. Only present if the type is repeatGroup"
+    ), // Optional, only if type is "repeatGroup"
 });
 
 export const intervalSchema = z.object({
@@ -67,7 +85,7 @@ export const workoutSchema = z.object({
   title: z.string(),
   description: z.string(),
   type: WorkoutTypeSchema,
-  items: z.array(z.union([intervalSchema, repeatGroupSchema])),
+  items: z.array(workoutItemSchema),
 });
 
 // Define the schema for the scheduled workout

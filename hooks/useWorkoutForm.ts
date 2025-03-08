@@ -15,7 +15,6 @@ import {
   WorkoutType,
 } from "@/types/workouts";
 import {
-  formatGoalTime,
   validateScheduleStep,
   validateTimeInput,
 } from "@/utils/workout-validation";
@@ -39,6 +38,7 @@ const initialFormData: WorkoutScheduleFormData = {
   goalTimeHours: "",
   goalTimeMinutes: "",
   goalTimeSeconds: "",
+  goalTime: "",
   additionalNotes: "",
 };
 
@@ -100,7 +100,7 @@ export const useWorkoutForm = () => {
 
   // Mutations
   const generateSkeletonMutation = useMutation({
-    mutationFn: async (formData: any) => {
+    mutationFn: async (formData: WorkoutScheduleFormData) => {
       const response = await fetch("/api/generate-skeleton", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -309,15 +309,8 @@ export const useWorkoutForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateStep(step)) {
-      const goalTime = formatGoalTime(
-        formData.goalTimeHours,
-        formData.goalTimeMinutes,
-        formData.goalTimeSeconds
-      );
-
       await generateSkeletonMutation.mutateAsync({
         ...formData,
-        goalTime,
       });
     }
   };

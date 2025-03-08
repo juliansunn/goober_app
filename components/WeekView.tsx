@@ -130,7 +130,8 @@ export function WeekView({
         </div>
         <p className="text-sm mb-1">{week.description}</p>
         <p className="text-sm mb-2">
-          <strong>Planned Volume:</strong> {week.volumeValue} {week.volumeType}
+          <strong>Planned Volume:</strong> {week.volumeDistance.value}{" "}
+          {week.volumeDistance.unit}
         </p>
         <WorkoutWeeklyCalendar week={week} />
       </CardContent>

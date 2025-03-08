@@ -1,23 +1,28 @@
-import { addDays, format, getDay, startOfWeek } from "date-fns";
+import { addDays, format, getDay, parseISO, startOfWeek } from "date-fns";
 
 export function getWeekDates(startDate: Date): Date[] {
   const start = startOfWeek(startDate, { weekStartsOn: 1 }); // Assuming week starts on Monday
-  console.log("start", start);
 
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
 export function stringToDate(dateString: string): Date {
+  // Handle ISO string format (e.g. '2024-12-23T14:43:37.372Z')
+  if (dateString.includes("T")) {
+    return parseISO(dateString);
+  }
+  // Handle YYYY-MM-DD format
   const [year, month, day] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day);
 }
 
-export const getDaySlots = (startDate: string) => {
+export function getDaySlots(startDate: string) {
   const weekDates = getWeekDates(stringToDate(startDate));
 
   return Array.from({ length: 7 }, (_, i) => {
     // Convert i to day number where Monday is 1 and Sunday is 7
     const dayNumber = i + 1;
+    const dayName = format(weekDates[i], "EEEE");
     // Convert to date-fns day number (0-6) where Sunday is 0
     const dateFnsDay = dayNumber === 7 ? 0 : dayNumber;
 
@@ -25,9 +30,10 @@ export const getDaySlots = (startDate: string) => {
     return {
       dayIndex: i,
       date: matchingDate,
+      dayName: dayName,
     };
   });
-};
+}
 
 interface WeekOutline {
   startDate: Date;

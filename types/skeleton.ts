@@ -2,7 +2,7 @@ import {
   PhaseObjective as PrismaPhaseObjective,
   WeekFocus as PrismaWeekFocus,
 } from "@prisma/client";
-import { DurationType, WorkoutType } from "./workouts";
+import { WorkoutType } from "./workouts";
 
 export const PhaseObjective = PrismaPhaseObjective;
 export type PhaseObjective =
@@ -11,6 +11,14 @@ export type PhaseObjective =
 export const WeekFocus = PrismaWeekFocus;
 export type WeekFocus = (typeof WeekFocus)[keyof typeof WeekFocus];
 
+interface Volume {
+  value: number;
+  unit: string;
+}
+interface Duration {
+  minutes: number;
+}
+
 export interface Week {
   id?: number;
   weekNumber: number;
@@ -18,8 +26,8 @@ export interface Week {
   endDate: string;
   focus: WeekFocus;
   description: string;
-  volumeValue: number;
-  volumeType: DurationType;
+  volumeDistance: Volume;
+  volumeDuration: Duration;
 }
 
 export interface Phase {
@@ -44,4 +52,22 @@ export interface WorkoutSkeletonFormData extends TrainingSchedule {
   id?: string;
   title: string;
   type: WorkoutType;
+}
+
+export interface GeneratedWeekOutlinePrompt {
+  overallDescription: string;
+  phaseObjective: PhaseObjective;
+  phaseDescription: string;
+  weekFocus: WeekFocus;
+  weekDescription: string;
+  startDate: string;
+  endDate: string;
+  focus: WeekFocus;
+  volumeDistance: Volume;
+  volumeDuration: Duration;
+  raceType: WorkoutType;
+  goalTime: string;
+  experienceLevel: string;
+  restDay: string | null;
+  additionalNotes: string;
 }
