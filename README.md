@@ -42,7 +42,7 @@ https://goober-app.vercel.app
 
    ```
    git clone https://github.com/grubers-goobers/goober_app.git
-   cd goober-app
+   cd goober_app
    ```
 
 2. Run the setup command:

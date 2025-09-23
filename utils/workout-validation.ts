@@ -30,6 +30,7 @@ export const validateTimeInput = (
   value: string,
   type: "hours" | "minutes" | "seconds"
 ): boolean => {
+  if (value === "") return true;
   const numValue = parseInt(value, 10);
   if (isNaN(numValue) || numValue < 0) return false;
   if (type === "hours" && numValue > 99) return false;
