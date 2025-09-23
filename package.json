@@ -7,6 +7,7 @@
     "build": "prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "ts-node --project tsconfig.test.json tests/validateTimeInput.test.ts",
     "postinstall": "prisma generate && prisma migrate deploy",
     "devdb": "docker compose up -d && prisma migrate dev"
   },
