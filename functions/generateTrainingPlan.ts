@@ -3,7 +3,6 @@ import { workoutSkeletonSchema } from "@/schemas/skeleton";
 import { weekOutlineSchema } from "@/schemas/week-outline";
 import { GeneratedWeekOutlinePrompt } from "@/types/skeleton";
 import { WorkoutScheduleFormData } from "@/types/workout";
-import * as Langtrace from "@langtrase/typescript-sdk";
 
 import { createSDKClient, SDKModel } from "@/config/ai-models";
 import {
@@ -15,10 +14,11 @@ import fs from "fs/promises";
 import * as openai from "openai";
 import path from "path";
 
-Langtrace.init({
-  instrumentations: { openai },
-  api_key: process.env.LANGTRACE_API_KEY as string,
-});
+// Langtrace telemetry was previously initialized here, but the SDK pulls in
+// native Sentry profiling binaries that are not available in the serverless
+// runtime we deploy to. Attempting to load the SDK would cause the API route to
+// crash during module evaluation, so the initialization has been removed until
+// profiling support can be restored safely.
 
 interface ModelSelection {
   skeletonModel?: SDKModel;
