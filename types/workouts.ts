@@ -75,6 +75,3 @@ export interface ScheduledWorkout extends Workout {
   workout: Workout;
 }
 
-export interface GeneratedScheduledWorkout extends ScheduledWorkout {
-  notes: string;
-}

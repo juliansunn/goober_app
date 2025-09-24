@@ -9,11 +9,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { WorkoutSkeleton } from "@/types";
 import { FormErrors, WorkoutScheduleFormData } from "@/types/workout";
-import {
-  GeneratedScheduledWorkout,
-  ScheduledWorkout,
-  WorkoutType,
-} from "@/types/workouts";
+import { WorkoutType } from "@/types/workouts";
 import {
   validateScheduleStep,
   validateTimeInput,
@@ -122,35 +118,6 @@ export const useWorkoutForm = () => {
         variant: "destructive",
         title: "Error",
         description: "Failed to generate workout schedule skeleton",
-      });
-    },
-  });
-
-  const bulkCreateScheduledWorkoutsMutation = useMutation({
-    mutationFn: async (workouts: ScheduledWorkout[]) => {
-      const response = await fetch("/api/scheduled-workouts/bulk", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workouts }),
-      });
-      if (!response.ok)
-        throw new Error("Failed to bulk create scheduled workouts");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["scheduled-workouts"] });
-      queryClient.setQueryData(["generated-schedules"], []);
-      toast({
-        title: "Success",
-        description: "Workout schedule created successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Error creating workout schedule:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to create workout schedule",
       });
     },
   });
@@ -333,9 +300,6 @@ export const useWorkoutForm = () => {
 
     // Data
     scheduledWorkouts: scheduledWorkoutsQuery.data,
-    generatedScheduledWorkouts: queryClient.getQueryData([
-      "generated-schedules",
-    ]) as GeneratedScheduledWorkout[],
     workoutSchedules: workoutSchedulesQuery.data,
 
     // Handlers
@@ -347,7 +311,6 @@ export const useWorkoutForm = () => {
     handleSubmit,
 
     // Actions
-    bulkCreateScheduledWorkouts: bulkCreateScheduledWorkoutsMutation.mutate,
     saveWorkoutSchedule: workoutScheduleMutation.mutate,
     loadSchedule: (id: number) => {
       setFormData((prev) => ({ ...prev, id }));

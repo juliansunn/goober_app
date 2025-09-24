@@ -1,7 +1,6 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { GeneratedScheduledWorkout } from "@/types/workouts";
 import { Prisma, WorkoutType } from "@prisma/client";
 
 // Helper function to create an interval
@@ -92,37 +91,3 @@ export async function createWorkout(
   });
 }
 
-export async function createScheduleWorkouts(
-  userId: number,
-  scheduledWorkouts: GeneratedScheduledWorkout[]
-) {
-  return await prisma.$transaction(async () => {
-    const scheduledWorkoutsData = [];
-
-    for (const sw of scheduledWorkouts) {
-      // Create the workout using the existing createWorkout function
-      const workout = await createWorkout(
-        userId,
-        sw.workout.title,
-        sw.workout.description,
-        sw.workout.type,
-        sw.workout.items
-      );
-
-      // Prepare data for the scheduled workout
-      scheduledWorkoutsData.push({
-        userId,
-        workoutId: workout.id,
-        scheduledAt: sw.scheduledAt,
-        notes: sw.notes,
-      });
-    }
-
-    // Create all scheduled workouts using createMany
-    await prisma.scheduledWorkout.createMany({
-      data: scheduledWorkoutsData,
-    });
-
-    return scheduledWorkoutsData;
-  });
-}
