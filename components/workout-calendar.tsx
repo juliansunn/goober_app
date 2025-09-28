@@ -42,11 +42,7 @@ export function WorkoutCalendarComponent({
   const [isEditingSidebar, setIsEditingSidebar] = useState(false);
   const [currentDate, setCurrentDate] = useState(startDate);
 
-  const {
-    calendarItems,
-    // bulkCreateScheduledWorkouts,
-    // clearGeneratedScheduledWorkouts,
-  } = useWorkout();
+  const { calendarItems } = useWorkout();
 
   const queryClient = useQueryClient();
 

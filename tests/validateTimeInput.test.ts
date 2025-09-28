@@ -1,3 +1,4 @@
+import "./scheduledWorkoutsFunctions.test";
 import { strict as assert } from "assert";
 import { validateTimeInput } from "../utils/workout-validation";
 
